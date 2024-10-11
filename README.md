@@ -1,5 +1,5 @@
 # cs3110_final
 
-Amy Wang - ajw289
-Angelina Chen (asc337)
-Falak Raheja (fr273)
+Amy Wang - ajw289 </br>
+Angelina Chen (asc337) </br>
+Falak Raheja (fr273)</br>
