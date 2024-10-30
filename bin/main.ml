@@ -68,7 +68,7 @@ let word_positions =
   ]
 
 (* Load accepted and target words from files *)
-let accepted_words = load_words "data/accepted_words.csv"
+let accepted_words = load_words "data/filtered_accepted_words.csv"
 
 let print_letter letter highlight =
   if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
