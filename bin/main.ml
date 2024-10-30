@@ -1,14 +1,40 @@
 open GMain
 open GPango
+open Printf
 
 (* Initialize GTK *)
 let () = ignore (GMain.init ())
 
-(* Create a new window *)
-let window = GWindow.window ~title:"OCaml Strands" ~border_width:10 ()
+(* Initialize counters *)
+let hint_counter = ref 0
+let match_counter = ref 0
+let max_hints = 7
 
+(* Load words from a CSV file into a set *)
+let load_words filename =
+  let words = Hashtbl.create 100 in
+  let channel = open_in filename in
+  try
+    while true do
+      let word = input_line channel in
+      Hashtbl.add words word true
+    done;
+    words
+  with End_of_file ->
+    close_in channel;
+    words
+
+(* Define types *)
 type letter = char
 type grid = letter array array
+
+type game_state = {
+  grid : grid;
+  found_words : string list;
+}
+
+(* Create a new window *)
+let window = GWindow.window ~title:"OCaml Strands" ~border_width:10 ()
 
 let initial_grid : grid =
   [|
@@ -41,10 +67,8 @@ let word_positions =
       [ (4, 0); (3, 1); (4, 2); (3, 2); (3, 3); (4, 4); (3, 4); (4, 5) ] );
   ]
 
-type game_state = {
-  grid : grid;
-  found_words : string list;
-}
+(* Load accepted and target words from files *)
+let accepted_words = load_words "data/accepted_words.csv"
 
 let print_letter letter highlight =
   if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
@@ -74,11 +98,30 @@ let handle_guess state guess =
   then { state with found_words = lower_guess :: state.found_words }
   else state
 
+(* Check word input, update counters, and display appropriate messages *)
+let process_input state word =
+  let word = String.lowercase_ascii word in
+  (* Convert user input to lowercase *)
+  if List.mem word target_words then (
+    incr match_counter;
+    printf "Match found! Total matches: %d\n" !match_counter;
+    { state with found_words = word :: state.found_words })
+  else if Hashtbl.mem accepted_words word then (
+    incr hint_counter;
+    printf "Hint incremented. Total hints: %d\n" !hint_counter;
+    printf "Current hint count: %d/%d\n" !hint_counter max_hints;
+    if !hint_counter >= max_hints then printf "Hint available!\n";
+    state)
+  else (
+    printf "Invalid word: %s\n" word;
+    state)
+
 let rec game_loop state =
   Printf.printf "Guess a word: ";
   let guess = read_line () in
 
-  let new_state = handle_guess state guess in
+  (* Call process_input to handle the guess and update counters *)
+  let new_state = process_input state guess in
 
   print_grid new_state.grid new_state.found_words;
 
