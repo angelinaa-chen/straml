@@ -1,6 +1,7 @@
 open GMain
 open GPango
 open Printf
+open Cs3110_fin.Logic
 
 (* Initialize GTK *)
 let () = ignore (GMain.init ())
@@ -23,15 +24,6 @@ let load_words filename =
   with End_of_file ->
     close_in channel;
     words
-
-(* Define types *)
-type letter = char
-type grid = letter array array
-
-type game_state = {
-  grid : grid;
-  found_words : string list;
-}
 
 (* Create a new window *)
 let window = GWindow.window ~title:"OCaml Strands" ~border_width:10 ()
@@ -70,64 +62,21 @@ let word_positions =
 (* Load accepted and target words from files *)
 let accepted_words = load_words "data/filtered_accepted_words.csv"
 
-let print_letter letter highlight =
-  if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
-  else Printf.printf "%c " letter
-
-let is_highlighted (r, c) found_words =
-  List.exists
-    (fun (word, positions) ->
-      List.mem word found_words && List.mem (r, c) positions)
-    word_positions
-
-let print_grid (grid : letter array array) found_words =
-  Array.iteri
-    (fun r row ->
-      Array.iteri
-        (fun c letter ->
-          print_letter letter (is_highlighted (r, c) found_words))
-        row;
-      print_newline ())
-    grid
-
-let handle_guess state guess =
-  let lower_guess = String.lowercase_ascii guess in
-  if
-    List.mem lower_guess target_words
-    && not (List.mem lower_guess state.found_words)
-  then { state with found_words = lower_guess :: state.found_words }
-  else state
-
-(* Check word input, update counters, and display appropriate messages *)
-let process_input state word =
-  let word = String.lowercase_ascii word in
-  (* Convert user input to lowercase *)
-  if List.mem word target_words then (
-    incr match_counter;
-    printf "Match found! Total matches: %d\n" !match_counter;
-    { state with found_words = word :: state.found_words })
-  else if Hashtbl.mem accepted_words word then (
-    incr hint_counter;
-    printf "Hint incremented. Total hints: %d\n" !hint_counter;
-    printf "Current hint count: %d/%d\n" !hint_counter max_hints;
-    if !hint_counter >= max_hints then printf "Hint available!\n";
-    state)
-  else (
-    printf "Invalid word: %s\n" word;
-    state)
+let game_state = Cs3110_fin.Logic.make_state initial_grid []
 
 let rec game_loop state =
   Printf.printf "Guess a word: ";
   let guess = read_line () in
 
   (* Call process_input to handle the guess and update counters *)
-  let new_state = process_input state guess in
-
-  print_grid new_state.grid new_state.found_words;
+  let temp = process_input state guess target_words match_counter hint_counter max_hints accepted_words in
+  let new_state = Cs3110_fin.Logic.make_state temp.grid temp.found_words in
+  print_grid new_state.grid new_state.found_words word_positions;
 
   if List.length new_state.found_words = List.length target_words then (
-    print_grid new_state.grid new_state.found_words;
-    Printf.printf "YAY congrats! You found all the words (:\n")
+    print_grid new_state.grid new_state.found_words word_positions;
+    Printf.printf "YAY congrats! You found all the words (:\n"
+  )
   else game_loop new_state
 
 (* Execute *)
@@ -150,7 +99,7 @@ let () =
     (start_button#connect#clicked ~callback:(fun () ->
          print_endline "Theme: Fall Fun";
          let initial_state = { grid = initial_grid; found_words = [] } in
-         print_grid initial_state.grid initial_state.found_words;
+         print_grid initial_state.grid initial_state.found_words word_positions;
          game_loop initial_state));
 
   (* Show all widgets *)
