@@ -8,21 +8,36 @@ type game_state = {
   found_words : string list;
 }
 
-let make_state grid words= 
-  {grid = grid; found_words = words}
+(* Load words from a CSV file into a set *)
+let load_words filename =
+  let words = Hashtbl.create 100 in
+  let channel = open_in filename in
+  try
+    while true do
+      let word = input_line channel in
+      Hashtbl.add words word true
+    done;
+    words
+  with End_of_file ->
+    close_in channel;
+    words
+
+(* Load accepted and target words from files *)
+let accepted_words = load_words "./data/filtered_accepted_words.csv"
+let make_state grid words = { grid; found_words = words }
 
 (*stylizes a given letter*)
 let print_letter letter highlight =
   if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
   else Printf.printf "%c " letter
 
-let is_highlighted (r, c) found_words word_positions=
+let is_highlighted (r, c) found_words word_positions =
   List.exists
     (fun (word, positions) ->
       List.mem word found_words && List.mem (r, c) positions)
     word_positions
 
-let print_grid (grid : letter array array) found_words word_positions=
+let print_grid (grid : letter array array) found_words word_positions =
   Array.iteri
     (fun r row ->
       Array.iteri
@@ -33,7 +48,7 @@ let print_grid (grid : letter array array) found_words word_positions=
     grid
 
 (**[handle_guess] updates the state if a target word is found*)
-let handle_guess state guess target_words=
+let handle_guess state guess target_words =
   let lower_guess = String.lowercase_ascii guess in
   if
     List.mem lower_guess target_words
@@ -42,7 +57,7 @@ let handle_guess state guess target_words=
   else state
 
 (** Check word input, update counters, and display appropriate messages *)
-let process_input state word target_words match_counter hint_counter max_hints accepted_words=
+let process_input state word target_words match_counter hint_counter max_hints =
   let word = String.lowercase_ascii word in
   (* Convert user input to lowercase *)
   if List.mem word target_words then (
