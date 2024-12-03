@@ -9,21 +9,16 @@ type game_state = {
 }
 
 (* Load words from a CSV file into a set *)
-let load_words filename =
-  let words = Hashtbl.create 100 in
-  let channel = open_in filename in
+(* Load words from a file into a BatSet *)
+let load_words path =
   try
-    while true do
-      let word = input_line channel in
-      Hashtbl.add words word true
-    done;
-    words
-  with End_of_file ->
-    close_in channel;
-    words
+    BatFile.lines_of path
+    |> BatEnum.fold
+         (fun acc word ->
+           BatSet.add (String.trim (String.lowercase_ascii word)) acc)
+         BatSet.empty
+  with Sys_error msg -> failwith ("Failed to load words from file: " ^ msg)
 
-(* Load accepted and target words from files *)
-let accepted_words = load_words "./data/filtered_accepted_words.csv"
 let make_state grid words = { grid; found_words = words }
 
 (*stylizes a given letter*)
@@ -57,19 +52,23 @@ let handle_guess state guess target_words =
   else state
 
 (** Check word input, update counters, and display appropriate messages *)
-let process_input state word target_words match_counter hint_counter max_hints =
-  let word = String.lowercase_ascii word in
-  (* Convert user input to lowercase *)
+
+(** Check word input, update counters, and display appropriate messages *)
+
+let process_input state word target_words match_counter hint_counter max_hints
+    accepted_words =
+  let word = String.trim (String.lowercase_ascii word) in
   if List.mem word target_words then (
     incr match_counter;
-    printf "Match found! Total matches: %d\n" !match_counter;
+    Printf.printf "Match found! Total matches: %d\n" !match_counter;
     { state with found_words = word :: state.found_words })
-  else if Hashtbl.mem accepted_words word then (
+  else if BatSet.mem word accepted_words then (
+    (* Check with BatSet *)
     incr hint_counter;
-    printf "Hint incremented. Total hints: %d\n" !hint_counter;
-    printf "Current hint count: %d/%d\n" !hint_counter max_hints;
-    if !hint_counter >= max_hints then printf "Hint available!\n";
+    Printf.printf "Hint incremented. Total hints: %d\n" !hint_counter;
+    Printf.printf "Current hint count: %d/%d\n" !hint_counter max_hints;
+    if !hint_counter >= max_hints then Printf.printf "Hint available!\n";
     state)
   else (
-    printf "Invalid word: %s\n" word;
+    Printf.printf "Invalid word: %s\n" word;
     state)
