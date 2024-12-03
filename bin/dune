@@ -1,4 +1,4 @@
 (executable
  (public_name cs3110_fin)
  (name main)
- (libraries cs3110_fin lablgtk3))
+ (libraries cs3110_fin lablgtk3 batteries))

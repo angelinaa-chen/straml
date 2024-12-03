@@ -1,2 +1,3 @@
 (library
- (name cs3110_fin))
+ (name cs3110_fin)
+ (libraries batteries))
