@@ -47,8 +47,7 @@ let test_handle_guess _ =
 let test_process_input _ =
   let grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |] in
   let target_words = [ "target" ] in
-  let accepted_words = Hashtbl.create 10 in
-  Hashtbl.add accepted_words "hint" true;
+  let accepted_words = BatSet.of_list [ "hint"; "clue" ] in
   let match_counter = ref 0 in
   let hint_counter = ref 0 in
   let max_hints = 3 in
@@ -56,23 +55,25 @@ let test_process_input _ =
 
   let match_state =
     process_input initial_state "target" target_words match_counter hint_counter
-      max_hints
+      max_hints accepted_words
   in
   assert_equal match_state.found_words [ "target" ];
   assert_equal !match_counter 1;
 
   let hint_state =
     process_input match_state "hint" target_words match_counter hint_counter
-      max_hints
+      max_hints accepted_words
   in
   assert_equal hint_state.found_words [ "target" ];
   assert_equal !hint_counter 1;
 
   let invalid_state =
     process_input hint_state "invalid" target_words match_counter hint_counter
-      max_hints
+      max_hints accepted_words
   in
-  assert_equal invalid_state.found_words [ "target" ]
+  assert_equal invalid_state.found_words [ "target" ];
+  assert_equal !match_counter 1;
+  assert_equal !hint_counter 1
 
 let suite =
   "TestGame"
