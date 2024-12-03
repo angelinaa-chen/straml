@@ -47,7 +47,7 @@ let print_grid (grid : letter array array) found_words word_positions =
       print_newline ())
     grid
 
-(**[handle_guess] updates the state if a target word is found*)
+(** [handle_guess] updates the state if a target word is found *)
 let handle_guess state guess target_words =
   let lower_guess = String.lowercase_ascii guess in
   if
