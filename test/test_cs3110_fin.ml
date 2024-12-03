@@ -24,6 +24,7 @@ let test_print_letter _ =
 
   (* Finalize output and assert *)
   Format.pp_print_flush fmt ();
+
   (* Ensure all contents are flushed to the buffer *)
   let output = Buffer.contents buffer in
   assert_equal output "\027[1;32ma\027[0m "
