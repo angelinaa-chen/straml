@@ -1,4 +1,5 @@
 (executable
  (public_name cs3110_fin)
  (name main)
- (libraries cs3110_fin lablgtk3 batteries))
+ (libraries cs3110_fin lablgtk3 batteries)
+ (flags :standard -ccopt -L/opt/homebrew/Cellar/harfbuzz/10.1.0/lib))

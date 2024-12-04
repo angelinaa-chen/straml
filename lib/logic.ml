@@ -8,7 +8,6 @@ type game_state = {
   found_words : string list;
 }
 
-(* Load words from a CSV file into a set *)
 (* Load words from a file into a BatSet *)
 let load_words path =
   try
@@ -50,8 +49,6 @@ let handle_guess state guess target_words =
     && not (List.mem lower_guess state.found_words)
   then { state with found_words = lower_guess :: state.found_words }
   else state
-
-(** Check word input, update counters, and display appropriate messages *)
 
 (** Check word input, update counters, and display appropriate messages *)
 
