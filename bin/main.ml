@@ -122,21 +122,7 @@ let to_your_health_position =
   ]
 
 type game_state = Cs3110_fin.Logic.game_state
-
-(* Handle theme selection and starts the game in terminal *)
-let select_theme () =
-  print_endline "Choose a theme to play:";
-  print_endline "1. Fall Fun";
-  print_endline "2. Well-Suited";
-  print_endline "3. To Your Health";
-  print_endline "4. Extremely Online";
-  let theme_choice = read_int () in
-  match theme_choice with
-  | 1 -> initial_grid, target_words, word_positions
-  | 2 -> nice_fit, nice_fit_target, word_positions
-  | 3 -> to_your_health, to_your_health_target, to_your_health_position
-  | 4 -> extremely_online, extremely_online_target, word_positions
-  | _ -> initial_grid, target_words, word_positions
+let initialize_game grid words = { grid; found_words = [] }
 
 let print_letter letter highlight =
   if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
@@ -180,7 +166,20 @@ let rec game_loop state match_counter hint_counter max_hints accepted_words =
     exit 0)
   else game_loop new_state match_counter hint_counter max_hints accepted_words
 
-let initialize_game grid words = { grid; found_words = [] }
+(* Handle theme selection and starts the game in terminal *)
+let select_theme () =
+  print_endline "Choose a theme to play:";
+  print_endline "1. Fall Fun";
+  print_endline "2. Well-Suited";
+  print_endline "3. To Your Health";
+  print_endline "4. Extremely Online";
+  let theme_choice = read_int () in
+  match theme_choice with
+  | 1 -> initial_grid, target_words, word_positions
+  | 2 -> nice_fit, nice_fit_target, word_positions
+  | 3 -> to_your_health, to_your_health_target, to_your_health_position
+  | 4 -> extremely_online, extremely_online_target, word_positions
+  | _ -> initial_grid, target_words, word_positions
 
 let print_theme_info grid theme word_positions =
   print_endline ("Theme: " ^ theme);
