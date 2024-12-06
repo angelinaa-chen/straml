@@ -20,6 +20,16 @@ let load_words path =
 
 let make_state grid words = { grid; found_words = words }
 
+let add_to_guessed guess guessed_words =
+  if BatSet.mem guess guessed_words then
+    Printf.printf "You've already guessed this word\n"
+  else
+    let _ = BatSet.add guess guessed_words in
+    ()
+
+(* Return unit explicitly *)
+(* Add the word to the set if it hasn't been guessed yet *)
+
 (*stylizes a given letter*)
 let print_letter letter highlight =
   if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
@@ -53,8 +63,7 @@ let handle_guess state guess target_words =
 (** Check word input, update counters, and display appropriate messages *)
 
 let process_input state word target_words match_counter hint_counter max_hints
-    accepted_words =
-  let word = String.trim (String.lowercase_ascii word) in
+    guessed_words accepted_words =
   if List.mem word target_words then (
     incr match_counter;
     Printf.printf "Match found! Total matches: %d\n" !match_counter;
