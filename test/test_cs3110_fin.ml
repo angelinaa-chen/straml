@@ -4,10 +4,9 @@ open Cs3110_fin.Logic
 
 let test_make_state _ =
   let grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |] in
-  let words = [ "word" ] in
-  let state = make_state grid words in
+  let state = initialize_game grid in
   assert_equal state.grid grid;
-  assert_equal state.found_words words
+  assert_equal state.found_words BatSet.empty
 
 let test_print_letter _ =
   let buffer = Buffer.create 16 in
@@ -37,12 +36,14 @@ let test_is_highlighted _ =
 
 let test_handle_guess _ =
   let grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |] in
-  let state = make_state grid [] in
+  let state = initialize_game grid in
   let target_words = [ "hello"; "world" ] in
   let updated_state = handle_guess state "hello" target_words in
-  assert_equal updated_state.found_words [ "hello" ];
+  let temp = BatSet.empty in
+  let temp2 = BatSet.add "hello" temp in
+  assert_equal updated_state.found_words temp2;
   let no_update_state = handle_guess updated_state "invalid" target_words in
-  assert_equal no_update_state.found_words [ "hello" ]
+  assert_equal no_update_state.found_words temp2
 
 let test_process_input _ =
   let grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |] in
@@ -51,27 +52,28 @@ let test_process_input _ =
   let match_counter = ref 0 in
   let hint_counter = ref 0 in
   let max_hints = 3 in
-  let initial_state = make_state grid [] in
+  let initial_state = initialize_game grid in
 
   let match_state =
     process_input initial_state "target" target_words match_counter hint_counter
       max_hints accepted_words
   in
-  assert_equal match_state.found_words [ "target" ];
+  let temp = BatSet.of_list [ "target" ] in
   assert_equal !match_counter 1;
+  assert_equal match_state.found_words temp;
 
   let hint_state =
     process_input match_state "hint" target_words match_counter hint_counter
       max_hints accepted_words
   in
-  assert_equal hint_state.found_words [ "target" ];
+  assert_equal hint_state.found_words (BatSet.of_list [ "target" ]);
   assert_equal !hint_counter 1;
 
   let invalid_state =
     process_input hint_state "invalid" target_words match_counter hint_counter
       max_hints accepted_words
   in
-  assert_equal invalid_state.found_words [ "target" ];
+  assert_equal invalid_state.found_words (BatSet.of_list [ "target" ]);
   assert_equal !match_counter 1;
   assert_equal !hint_counter 1
 
