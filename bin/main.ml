@@ -50,6 +50,9 @@ let rec game_loop state match_counter hint_counter max_hints accepted_words
     target_words word_positions =
   Printf.printf "Guess a word: ";
   let guess = read_line () in
+  if guess = "q" then (
+    Printf.printf "Exiting the game..";
+    exit 0);
   let new_state =
     Cs3110_fin.Logic.process_input state guess target_words match_counter
       hint_counter max_hints accepted_words
@@ -60,7 +63,7 @@ let rec game_loop state match_counter hint_counter max_hints accepted_words
     List.length (BatSet.to_list new_state.found_words)
     = List.length target_words
   then (
-    Printf.printf "YAY congrats! You found all the words (:\n";
+    Printf.printf "Congrats! You found all the words. \n";
     exit 0)
   else
     game_loop new_state match_counter hint_counter max_hints accepted_words
@@ -73,7 +76,9 @@ let print_theme state =
 
 (* Handle all the theme selection *)
 let select_theme () =
-  print_endline "Choose a theme to play:";
+  print_endline
+    "Choose a theme to play by typing the associated number with it below. To \
+     exit out of the game at any time, simply type q.";
   print_endline "1. Fall Fun";
   print_endline "2. Well-Suited";
   print_endline "3. To Your Health";
@@ -93,18 +98,18 @@ let select_theme () =
   | 3 ->
       ( GridData.to_your_health,
         GridData.to_your_health_target,
-        GridData.word_positions,
+        GridData.to_your_health_position,
         "To Your Health" )
   | 4 ->
       ( GridData.extremely_online,
         GridData.extremely_online_target,
-        GridData.word_positions,
+        GridData.extremely_online_positions,
         "Extremely Online" )
   | _ ->
       ( GridData.initial_grid,
         GridData.target_words,
         GridData.word_positions,
-        "Invalid theme :(" )
+        "Invalid theme." )
 
 let print_theme_info grid theme word_positions =
   print_endline ("Theme: " ^ theme);
