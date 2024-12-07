@@ -38,28 +38,25 @@ let print_grid (grid : letter array array) found_words word_positions =
       print_newline ())
     grid
 
-let handle_guess state guess target_words =
-  let lower_guess = String.lowercase_ascii guess in
-  if
-    List.mem lower_guess target_words
-    && not (BatSet.mem lower_guess state.found_words)
-  then { state with found_words = BatSet.add lower_guess state.found_words }
-  else state
+(* let handle_guess state guess target_words = let lower_guess =
+   String.lowercase_ascii guess in if List.mem lower_guess target_words && not
+   (BatSet.mem lower_guess state.found_words) then { state with found_words =
+   BatSet.add lower_guess state.found_words } else state *)
 
 let rec game_loop state match_counter hint_counter max_hints accepted_words
     target_words word_positions =
   Printf.printf "Guess a word: ";
   let guess = read_line () in
+  if guess = "q" then (
+    Printf.printf "Exiting the game..";
+    exit 0);
   let new_state =
     Cs3110_fin.Logic.process_input state guess target_words match_counter
-      hint_counter max_hints accepted_words
+      hint_counter max_hints accepted_words word_positions
   in
   Cs3110_fin.Logic.print_grid new_state.grid new_state.found_words
     word_positions;
-  if
-    List.length (BatSet.to_list new_state.found_words)
-    = List.length target_words
-  then (
+  if BatSet.cardinal new_state.found_words = List.length target_words then (
     Printf.printf "YAY congrats! You found all the words (:\n";
     exit 0)
   else
@@ -73,7 +70,9 @@ let print_theme state =
 
 (* Handle all the theme selection *)
 let select_theme () =
-  print_endline "Choose a theme to play:";
+  print_endline
+    "Choose a theme to play by typing the associated number with it below. To \
+     exit out of the game at any time, simply type q.";
   print_endline "1. Fall Fun";
   print_endline "2. Well-Suited";
   print_endline "3. To Your Health";
@@ -93,18 +92,18 @@ let select_theme () =
   | 3 ->
       ( GridData.to_your_health,
         GridData.to_your_health_target,
-        GridData.word_positions,
+        GridData.to_your_health_position,
         "To Your Health" )
   | 4 ->
       ( GridData.extremely_online,
         GridData.extremely_online_target,
-        GridData.word_positions,
+        GridData.extremely_online_positions,
         "Extremely Online" )
   | _ ->
       ( GridData.initial_grid,
         GridData.target_words,
         GridData.word_positions,
-        "Invalid theme :(" )
+        "Invalid theme." )
 
 let print_theme_info grid theme word_positions =
   print_endline ("Theme: " ^ theme);
