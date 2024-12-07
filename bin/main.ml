@@ -38,13 +38,10 @@ let print_grid (grid : letter array array) found_words word_positions =
       print_newline ())
     grid
 
-let handle_guess state guess target_words =
-  let lower_guess = String.lowercase_ascii guess in
-  if
-    List.mem lower_guess target_words
-    && not (BatSet.mem lower_guess state.found_words)
-  then { state with found_words = BatSet.add lower_guess state.found_words }
-  else state
+(* let handle_guess state guess target_words = let lower_guess =
+   String.lowercase_ascii guess in if List.mem lower_guess target_words && not
+   (BatSet.mem lower_guess state.found_words) then { state with found_words =
+   BatSet.add lower_guess state.found_words } else state *)
 
 let rec game_loop state match_counter hint_counter max_hints accepted_words
     target_words word_positions =
@@ -55,7 +52,7 @@ let rec game_loop state match_counter hint_counter max_hints accepted_words
     exit 0);
   let new_state =
     Cs3110_fin.Logic.process_input state guess target_words match_counter
-      hint_counter max_hints accepted_words
+      hint_counter max_hints accepted_words word_positions
   in
   Cs3110_fin.Logic.print_grid new_state.grid new_state.found_words
     word_positions;
