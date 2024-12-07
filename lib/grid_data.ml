@@ -13,7 +13,7 @@ module GridData = struct
       [| 'R'; 'S'; 'I'; 'O'; 'P'; 'L' |];
       [| 'E'; 'D'; 'D'; 'A'; 'E'; 'S' |];
     |]
-  
+
   (* Spangram: Medical career *)
   let to_your_health : grid =
     [|
@@ -26,7 +26,7 @@ module GridData = struct
       [| 'G'; 'N'; 'E'; 'C'; 'T'; 'O' |];
       [| 'R'; 'U'; 'S'; 'R'; 'O'; 'D' |];
     |]
-  
+
   (* Spangram: Well-suited *)
   let nice_fit : grid =
     [|
@@ -53,7 +53,10 @@ module GridData = struct
       [| 'T'; 'R'; 'O'; 'E'; 'S'; 'T' |];
     |]
 
-  let target_words = [ "hayrides"; "pumpkins"; "maze"; "cider"; "doughnuts"; "apples"; "orchards" ]
+  let target_words =
+    [
+      "hayrides"; "pumpkins"; "maze"; "cider"; "doughnuts"; "apples"; "orchards";
+    ]
 
   let extremely_online_target =
     [
@@ -69,7 +72,9 @@ module GridData = struct
     ]
 
   let nice_fit_target =
-    [ "jump"; "birthday"; "leisure"; "business"; "civil"; "strong"; "wellsuited" ]
+    [
+      "jump"; "birthday"; "leisure"; "business"; "civil"; "strong"; "wellsuited";
+    ]
 
   let to_your_health_target =
     [ "nurse"; "dentist"; "medicalcareer"; "surgeon"; "pharmacist"; "doctor" ]
@@ -83,27 +88,48 @@ module GridData = struct
       ("maze", [ (2, 2); (2, 1); (3, 0); (2, 0) ]);
       ("cider", [ (5, 1); (6, 2); (7, 1); (7, 0); (6, 0) ]);
       ( "doughnuts",
-        [ (7, 2); (6, 3); (5, 4); (4, 3); (5, 3); (5, 2); (4, 1); (5, 0); (6, 1) ] );
+        [
+          (7, 2); (6, 3); (5, 4); (4, 3); (5, 3); (5, 2); (4, 1); (5, 0); (6, 1);
+        ] );
       ("apples", [ (7, 3); (6, 4); (5, 5); (6, 5); (7, 4); (7, 5) ]);
       ( "orchards",
         [ (4, 0); (3, 1); (4, 2); (3, 2); (3, 3); (4, 4); (3, 4); (4, 5) ] );
     ]
 
-  (** TODO: FIX*)
   let to_your_health_position =
     [
-      ( "hayrides",
-        [ (3, 4); (1, 5); (2, 5); (1, 4); (1, 3); (0, 4); (1, 5); (0, 5) ] );
-      ( "pumpkins",
-        [ (2, 3); (1, 2); (0, 3); (0, 2); (1, 1); (1, 0); (0, 1); (0, 0) ] );
-      ("maze", [ (2, 2); (2, 1); (3, 0); (2, 0) ]);
-      ("cider", [ (5, 1); (6, 2); (7, 1); (7, 0); (6, 0) ]);
-      ( "doughnuts",
-        [ (7, 2); (6, 3); (5, 4); (4, 3); (5, 3); (5, 2); (4, 1); (5, 0); (6, 1) ]
-      );
-      ("apples", [ (7, 3); (6, 4); (5, 5); (6, 5); (7, 4); (7, 5) ]);
-      ( "orchards",
-        [ (4, 0); (3, 1); (4, 2); (3, 2); (3, 3); (4, 4); (3, 4); (4, 5) ] );
+      ("nurse", [ (0, 1); (0, 2); (1, 1); (0, 0); (1, 0) ]);
+      ("dentist", [ (2, 0); (2, 1); (3, 0); (4, 0); (4, 1); (4, 2); (4, 3) ]);
+      ( "medicalcareer",
+        [
+          (3, 0);
+          (2, 1);
+          (3, 1);
+          (2, 2);
+          (3, 1);
+          (3, 2);
+          (3, 3);
+          (4, 4);
+          (5, 4);
+          (5, 3);
+          (5, 2);
+          (6, 2);
+          (7, 3);
+        ] );
+      ("surgeon", [ (7, 2); (7, 1); (7, 0); (6, 0); (5, 0); (5, 1); (6, 1) ]);
+      ( "pharmacist",
+        [
+          (2, 3);
+          (1, 4);
+          (0, 4);
+          (0, 5);
+          (1, 5);
+          (2, 4);
+          (2, 5);
+          (3, 5);
+          (4, 5);
+          (3, 4);
+        ] );
+      ("doctor", [ (7, 5); (7, 4); (6, 3); (6, 4); (6, 5); (5, 5) ]);
     ]
-    
 end
