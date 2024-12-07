@@ -7,10 +7,11 @@ type game_state = {
   grid : grid;
   found_words : string BatSet.t;
   guessed_words : string BatSet.t;
+  theme : string;
 }
 
-let initialize_game grid =
-  { grid; found_words = BatSet.empty; guessed_words = BatSet.empty }
+let initialize_game grid theme =
+  { grid; found_words = BatSet.empty; guessed_words = BatSet.empty; theme }
 
 (* Load words from a file into a BatSet *)
 let load_words path =
