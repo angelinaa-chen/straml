@@ -56,11 +56,8 @@ let rec game_loop state match_counter hint_counter max_hints accepted_words
   in
   Cs3110_fin.Logic.print_grid new_state.grid new_state.found_words
     word_positions;
-  if
-    List.length (BatSet.to_list new_state.found_words)
-    = List.length target_words
-  then (
-    Printf.printf "Congrats! You found all the words. \n";
+  if BatSet.cardinal new_state.found_words = List.length target_words then (
+    Printf.printf "YAY congrats! You found all the words (:\n";
     exit 0)
   else
     game_loop new_state match_counter hint_counter max_hints accepted_words
