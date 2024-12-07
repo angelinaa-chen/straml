@@ -9,6 +9,9 @@ type game_state = {
   guessed_words : string BatSet.t;
   theme : string;
 }
+(** [found_words] is the BatSet of target words that have been found.
+    [guessed_words] is the BatSet of all words that have been guessed. [theme]
+    is the puzzle that the user chose to play*)
 
 let initialize_game grid theme =
   { grid; found_words = BatSet.empty; guessed_words = BatSet.empty; theme }
