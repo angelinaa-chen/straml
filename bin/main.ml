@@ -13,9 +13,6 @@ let match_counter = ref 0
 let max_hints = 7
 let guessed_words = BatSet.empty
 
-(* Create a new window *)
-let window = GWindow.window ~title:"OCaml Strands" ~border_width:10 ()
-
 type game_state = Cs3110_fin.Logic.game_state
 
 let print_letter letter highlight =
@@ -37,11 +34,6 @@ let print_grid (grid : letter array array) found_words word_positions =
         row;
       print_newline ())
     grid
-
-(* let handle_guess state guess target_words = let lower_guess =
-   String.lowercase_ascii guess in if List.mem lower_guess target_words && not
-   (BatSet.mem lower_guess state.found_words) then { state with found_words =
-   BatSet.add lower_guess state.found_words } else state *)
 
 let rec game_loop state match_counter hint_counter max_hints accepted_words
     target_words word_positions =
@@ -109,30 +101,108 @@ let print_theme_info grid theme word_positions =
   print_endline ("Theme: " ^ theme);
   Cs3110_fin.Logic.print_grid grid BatSet.empty word_positions
 
+(* How many GUI windows are actively running*)
+let window_count = ref 1
+
+let destroy_window () =
+  (* Check if any windows are active *)
+  window_count := !window_count - 1;
+  if !window_count < 1 then GMain.quit () else ()
+
+let make_game_Window parent grid target_words word_positions theme =
+  print_theme_info grid theme word_positions;
+
+  let accepted_words =
+    Cs3110_fin.Logic.load_words "data/filtered_accepted_words.csv"
+  in
+
+  let initial_state = Cs3110_fin.Logic.initialize_game grid theme in
+
+  game_loop initial_state match_counter hint_counter max_hints accepted_words
+    target_words word_positions
+
+let make_choose_Window () =
+  (* Create new window *)
+  let choose_Window =
+    GWindow.window ~title:"Choose Theme" ~border_width:20 ()
+  in
+  window_count := !window_count + 1;
+
+  (* Set up exit function when the window is closed *)
+  ignore (choose_Window#connect#destroy ~callback:destroy_window);
+
+  (* Create vertical element box with 20 px of padding *)
+  let vbox = GPack.vbox ~border_width:20 ~packing:choose_Window#add () in
+  (* Add a label to the new window *)
+  ignore (GMisc.label ~text:"Choose a Theme:" ~packing:vbox#pack ());
+
+  let button1 = GButton.button ~label:"Fall Fun" ~packing:vbox#pack () in
+  (* Set up a callback for the button click event *)
+  ignore
+    (button1#connect#clicked ~callback:(fun () ->
+         ignore
+           (make_game_Window choose_Window GridData.initial_grid
+              GridData.target_words GridData.word_positions "Fall Fun");
+         choose_Window#destroy ()));
+
+  let button2 = GButton.button ~label:"Well-Suited" ~packing:vbox#pack () in
+  (* Set up a callback for the button click event *)
+  ignore
+    (button2#connect#clicked ~callback:(fun () ->
+         ignore
+           (make_game_Window choose_Window GridData.nice_fit
+              GridData.nice_fit_target GridData.word_positions "Well-Suited");
+         choose_Window#destroy ()));
+
+  let button3 = GButton.button ~label:"To Your Health" ~packing:vbox#pack () in
+  (* Set up a callback for the button click event *)
+  ignore
+    (button3#connect#clicked ~callback:(fun () ->
+         ignore
+           (make_game_Window choose_Window GridData.to_your_health
+              GridData.to_your_health_target GridData.to_your_health_position
+              "To Your Health");
+         choose_Window#destroy ()));
+
+  let button4 =
+    GButton.button ~label:"Extremely Online" ~packing:vbox#pack ()
+  in
+  (* Set up a callback for the button click event *)
+  ignore
+    (button4#connect#clicked ~callback:(fun () ->
+         ignore
+           (make_game_Window choose_Window GridData.extremely_online
+              GridData.extremely_online_target
+              GridData.extremely_online_positions "Extremely Online");
+         choose_Window#destroy ()));
+
+  choose_Window#show ()
+
+(* Execute GUI*)
 let () =
-  let window = GWindow.window ~title:"OCaml Strands" ~border_width:10 () in
+  let start_Window = GWindow.window ~title:"Straml" ~border_width:10 () in
+  (* Set up exit function when the window is closed *)
+  ignore (start_Window#connect#destroy ~callback:destroy_window);
 
-  ignore (window#connect#destroy ~callback:Main.quit);
-
-  let vbox = GPack.vbox ~border_width:20 ~packing:window#add () in
-  let title_label = GMisc.label ~text:"OCaml Strands" ~packing:vbox#pack () in
+  (* Create vertical element box with 20 px of padding *)
+  let vbox = GPack.vbox ~border_width:20 ~packing:start_Window#add () in
+  (* Create game title and subtitle with font 20 *)
+  let title_label = GMisc.label ~text:"Straml" ~packing:vbox#pack () in
   title_label#misc#modify_font (GPango.font_description_from_string "Serif 20");
+  ignore
+    (GMisc.label ~text:"By: Falak, Amy, Angie, and Matthew" ~packing:vbox#pack
+       ());
 
+  (* Create a start button to execute program *)
   let start_button = GButton.button ~label:"Play" ~packing:vbox#pack () in
-
+  (* Set up a callback for the button click event *)
   ignore
     (start_button#connect#clicked ~callback:(fun () ->
-         let grid, target_words, word_positions, theme = select_theme () in
-         print_theme_info grid theme word_positions;
+         make_choose_Window ();
+         start_Window#destroy ()));
 
-         let accepted_words =
-           Cs3110_fin.Logic.load_words "data/filtered_accepted_words.csv"
-         in
+  (* Show all widgets *)
+  start_Window#show ();
 
-         let initial_state = Cs3110_fin.Logic.initialize_game grid theme in
-
-         game_loop initial_state match_counter hint_counter max_hints
-           accepted_words target_words word_positions));
-
-  window#show ();
+  (* Start the GTK main loop *)
   Main.main ()
