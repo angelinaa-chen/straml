@@ -105,6 +105,11 @@ let select_theme () =
         GridData.extremely_online_target,
         GridData.extremely_online_positions,
         "Extremely Online" )
+  | 5 ->
+      ( GridData.bealtemania,
+        GridData.bealtemania_target,
+        GridData.extremely_online_positions,
+        "Beatlemania!" )
   | _ ->
       ( GridData.initial_grid,
         GridData.target_words,
@@ -189,7 +194,15 @@ let make_choose_Window () =
               GridData.extremely_online_target
               GridData.extremely_online_positions "Extremely Online");
          choose_Window#destroy ()));
-
+  let button5 = GButton.button ~label:"Beetlemania!" ~packing:vbox#pack () in
+  (* Set up a callback for the button click event *)
+  ignore
+    (button5#connect#clicked ~callback:(fun () ->
+         ignore
+           (make_game_Window choose_Window GridData.bealtemania
+              GridData.bealtemania_target GridData.extremely_online_positions
+              "Beatlemania!");
+         choose_Window#destroy ()));
   choose_Window#show ()
 
 (* Execute GUI*)
