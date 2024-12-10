@@ -138,6 +138,8 @@ let is_word_in_grid grid word =
   in
   search 0 0
 
+let is_spangram word spangram = if word = spangram then true else false
+
 let process_input state word target_words match_counter hint_counter max_hints
     accepted_words word_positions =
   match String.lowercase_ascii word with
@@ -152,12 +154,21 @@ let process_input state word target_words match_counter hint_counter max_hints
         state)
       else if List.mem word target_words then (
         incr match_counter;
-        Printf.printf "Match found! Total matches: %d\n" !match_counter;
-        {
-          state with
-          found_words = BatSet.add word state.found_words;
-          guessed_words = guessed_words_updated;
-        })
+        if List.hd target_words = word then (
+          Printf.printf "You found the Spangram! Total matches: %d\n"
+            !match_counter;
+          {
+            state with
+            found_words = BatSet.add word state.found_words;
+            guessed_words = guessed_words_updated;
+          })
+        else (
+          Printf.printf "Match found! Total matches: %d\n" !match_counter;
+          {
+            state with
+            found_words = BatSet.add word state.found_words;
+            guessed_words = guessed_words_updated;
+          }))
       else if is_word_in_grid state.grid word && BatSet.mem word accepted_words
       then (
         incr hint_counter;

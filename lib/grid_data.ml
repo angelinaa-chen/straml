@@ -67,7 +67,7 @@ module GridData = struct
 
   let target_words =
     [
-      "hayrides"; "pumpkins"; "maze"; "cider"; "doughnuts"; "apples"; "orchards";
+      "orchards"; "hayrides"; "pumpkins"; "maze"; "cider"; "doughnuts"; "apples";
     ]
 
   let extremely_online_target =
@@ -85,14 +85,14 @@ module GridData = struct
 
   let nice_fit_target =
     [
-      "jump"; "birthday"; "leisure"; "business"; "civil"; "strong"; "wellsuited";
+      "wellsuited"; "jump"; "birthday"; "leisure"; "business"; "civil"; "strong";
     ]
 
   let to_your_health_target =
-    [ "nurse"; "dentist"; "medicalcareer"; "surgeon"; "pharmacist"; "doctor" ]
+    [ "medicalcareer"; "nurse"; "dentist"; "surgeon"; "pharmacist"; "doctor" ]
 
   let beatlemania_target =
-    [ "revolution"; "blackbird"; "songtitles"; "yesterday"; "help"; "taxman" ]
+    [ "songtitles"; "revolution"; "blackbird"; "yesterday"; "help"; "taxman" ]
 
   let word_positions =
     [
