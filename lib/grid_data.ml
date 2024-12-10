@@ -53,6 +53,18 @@ module GridData = struct
       [| 'T'; 'R'; 'O'; 'E'; 'S'; 'T' |];
     |]
 
+  let bealtemania : grid =
+    [|
+      [| 'X'; 'M'; 'A'; 'N'; 'P'; 'L' |];
+      [| 'A'; 'T'; 'V'; 'O'; 'E'; 'H' |];
+      [| 'R'; 'E'; 'T'; 'I'; 'L'; 'T' |];
+      [| 'N'; 'G'; 'D'; 'T'; 'U'; 'I' |];
+      [| 'Y'; 'O'; 'R'; 'I'; 'L'; 'O' |];
+      [| 'D'; 'A'; 'S'; 'B'; 'E'; 'N' |];
+      [| 'R'; 'S'; 'K'; 'C'; 'A'; 'S' |];
+      [| 'E'; 'T'; 'E'; 'Y'; 'L'; 'B' |];
+    |]
+
   let target_words =
     [
       "hayrides"; "pumpkins"; "maze"; "cider"; "doughnuts"; "apples"; "orchards";
@@ -78,6 +90,9 @@ module GridData = struct
 
   let to_your_health_target =
     [ "nurse"; "dentist"; "medicalcareer"; "surgeon"; "pharmacist"; "doctor" ]
+
+  let bealtemania_target =
+    [ "revolution"; "blackbird"; "songtitles"; "yesterday"; "help"; "taxman" ]
 
   let word_positions =
     [

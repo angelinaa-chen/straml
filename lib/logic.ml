@@ -99,6 +99,45 @@ let hint_revealer state word_positions target_words accepted_words =
         Printf.printf "Hint word: %s\n" hint_word;
         hint_highlighter hint_word word_positions state.grid)
 
+let is_word_in_grid grid word =
+  let word = String.uppercase_ascii word in
+  let rows = Array.length grid in
+  let cols = Array.length grid.(0) in
+  let word_len = String.length word in
+
+  (* Check if the given position is within grid boundaries *)
+  let in_bounds r c = r >= 0 && r < rows && c >= 0 && c < cols in
+
+  (* Moving up, down, left, right, and diagonals *)
+  let directions =
+    [ (-1, 0); (1, 0); (0, -1); (0, 1); (-1, -1); (-1, 1); (1, -1); (1, 1) ]
+  in
+
+  let rec dfs r c index visited =
+    if index = word_len then true
+    else if
+      (not (in_bounds r c)) || visited.(r).(c) || grid.(r).(c) <> word.[index]
+    then false
+    else (
+      visited.(r).(c) <- true;
+      let result =
+        List.exists
+          (fun (dr, dc) -> dfs (r + dr) (c + dc) (index + 1) visited)
+          directions
+      in
+      visited.(r).(c) <- false;
+      result)
+  in
+
+  let visited = Array.make_matrix rows cols false in
+  let rec search r c =
+    if r = rows then false
+    else if c = cols then search (r + 1) 0
+    else if grid.(r).(c) = word.[0] && dfs r c 0 visited then true
+    else search r (c + 1)
+  in
+  search 0 0
+
 let process_input state word target_words match_counter hint_counter max_hints
     accepted_words word_positions =
   match String.lowercase_ascii word with
@@ -119,7 +158,8 @@ let process_input state word target_words match_counter hint_counter max_hints
           found_words = BatSet.add word state.found_words;
           guessed_words = guessed_words_updated;
         })
-      else if BatSet.mem word accepted_words then (
+      else if is_word_in_grid state.grid word && BatSet.mem word accepted_words
+      then (
         incr hint_counter;
         Printf.printf
           "Word count towards hint incremented. Total words guessed: %d\n"
