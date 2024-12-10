@@ -106,8 +106,8 @@ let select_theme () =
         GridData.extremely_online_positions,
         "Extremely Online" )
   | 5 ->
-      ( GridData.bealtemania,
-        GridData.bealtemania_target,
+      ( GridData.beatlemania,
+        GridData.beatlemania_target,
         GridData.extremely_online_positions,
         "Beatlemania!" )
   | _ ->
@@ -199,8 +199,8 @@ let make_choose_Window () =
   ignore
     (button5#connect#clicked ~callback:(fun () ->
          ignore
-           (make_game_Window choose_Window GridData.bealtemania
-              GridData.bealtemania_target GridData.extremely_online_positions
+           (make_game_Window choose_Window GridData.beatlemania
+              GridData.beatlemania_target GridData.extremely_online_positions
               "Beatlemania!");
          choose_Window#destroy ()));
   choose_Window#show ()

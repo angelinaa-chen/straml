@@ -53,7 +53,7 @@ module GridData = struct
       [| 'T'; 'R'; 'O'; 'E'; 'S'; 'T' |];
     |]
 
-  let bealtemania : grid =
+  let beatlemania : grid =
     [|
       [| 'X'; 'M'; 'A'; 'N'; 'P'; 'L' |];
       [| 'A'; 'T'; 'V'; 'O'; 'E'; 'H' |];
@@ -91,7 +91,7 @@ module GridData = struct
   let to_your_health_target =
     [ "nurse"; "dentist"; "medicalcareer"; "surgeon"; "pharmacist"; "doctor" ]
 
-  let bealtemania_target =
+  let beatlemania_target =
     [ "revolution"; "blackbird"; "songtitles"; "yesterday"; "help"; "taxman" ]
 
   let word_positions =
