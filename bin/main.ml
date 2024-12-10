@@ -16,26 +16,6 @@ let guessed_words = BatSet.empty
 
 type game_state = Cs3110_fin.Logic.game_state
 
-let print_letter letter highlight =
-  if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
-  else Printf.printf "%c " letter
-
-let is_highlighted (r, c) found_words word_positions =
-  List.exists
-    (fun (word, positions) ->
-      List.mem word found_words && List.mem (r, c) positions)
-    word_positions
-
-let print_grid (grid : letter array array) found_words word_positions =
-  Array.iteri
-    (fun r row ->
-      Array.iteri
-        (fun c letter ->
-          print_letter letter (is_highlighted (r, c) found_words word_positions))
-        row;
-      print_newline ())
-    grid
-
 (* Function to print the stats summary *)
 let stats_summary state match_counter hint_counter start_time =
   let end_time = Unix.gettimeofday () in

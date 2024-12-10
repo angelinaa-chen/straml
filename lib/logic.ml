@@ -32,8 +32,16 @@ let alr_guessed guess guessed_words =
 (* Add the word to the set if it hasn't been guessed yet *)
 
 (*stylizes a given letter*)
-let print_letter letter highlight =
+let print_letter_yellow letter highlight =
+  if highlight then Printf.printf "\027[1;33m%c\027[0m " letter
+  else Printf.printf "%c " letter
+
+let print_letter_green letter highlight =
   if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
+  else Printf.printf "%c " letter
+
+let print_letter_blue letter highlight =
+  if highlight then Printf.printf "\027[1;34m%c\027[0m " letter
   else Printf.printf "%c " letter
 
 let is_highlighted (r, c) found_words word_positions =
@@ -48,7 +56,12 @@ let print_grid (grid : letter array array) found_words word_positions =
     (fun r row ->
       Array.iteri
         (fun c letter ->
-          print_letter letter (is_highlighted (r, c) found_list word_positions))
+          if List.mem (r, c) (snd (List.hd word_positions)) then
+            print_letter_yellow letter
+              (is_highlighted (r, c) found_list word_positions)
+          else
+            print_letter_blue letter
+              (is_highlighted (r, c) found_list word_positions))
         row;
       print_newline ())
     grid
@@ -75,7 +88,7 @@ let hint_highlighter hint_word word_positions grid =
           Array.iteri
             (fun c letter ->
               let highlight = List.mem (r, c) positions in
-              print_letter letter highlight)
+              print_letter_green letter highlight)
             row;
           print_newline ())
         grid
