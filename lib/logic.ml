@@ -108,9 +108,9 @@ let hint_revealer state word_positions target_words accepted_words =
         Printf.printf
           "Sorry, hint not unlocked yet. Words left to unlock hint: %d\n"
           (3 - valid_guesses_count)
-      else (
-        Printf.printf "Hint word: %s\n" hint_word;
-        hint_highlighter hint_word word_positions state.grid)
+      else
+        (* Printf.printf "Hint word: %s\n" hint_word; *)
+        hint_highlighter hint_word word_positions state.grid
 
 let is_word_in_grid grid word =
   let word = String.uppercase_ascii word in
