@@ -1,5 +1,6 @@
 open GMain
 open GPango
+open Gtk
 open Printf
 open Cs3110_fin.Logic
 open Cs3110_fin.Grid_data
@@ -16,26 +17,6 @@ let guessed_words = BatSet.empty
 
 type game_state = Cs3110_fin.Logic.game_state
 
-let print_letter letter highlight =
-  if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
-  else Printf.printf "%c " letter
-
-let is_highlighted (r, c) found_words word_positions =
-  List.exists
-    (fun (word, positions) ->
-      List.mem word found_words && List.mem (r, c) positions)
-    word_positions
-
-let print_grid (grid : letter array array) found_words word_positions =
-  Array.iteri
-    (fun r row ->
-      Array.iteri
-        (fun c letter ->
-          print_letter letter (is_highlighted (r, c) found_words word_positions))
-        row;
-      print_newline ())
-    grid
-
 (* Function to print the stats summary *)
 let stats_summary state match_counter hint_counter start_time =
   let end_time = Unix.gettimeofday () in
@@ -47,78 +28,9 @@ let stats_summary state match_counter hint_counter start_time =
   Printf.printf "Time Spent: %.2f seconds\n" elapsed_time;
   Printf.printf "Thanks for playing! :) \n"
 
-(* Updated game loop to include stats summary on quit *)
-let rec game_loop state match_counter hint_counter max_hints accepted_words
-    target_words word_positions start_time =
-  Printf.printf "Guess a word (or type 'q' to quit): ";
-  let guess = read_line () in
-  if guess = "q" then (
-    stats_summary state match_counter hint_counter start_time;
-    exit 0);
-  let new_state =
-    Cs3110_fin.Logic.process_input state guess target_words match_counter
-      hint_counter max_hints accepted_words word_positions
-  in
-  Cs3110_fin.Logic.print_grid new_state.grid new_state.found_words
-    word_positions;
-  if BatSet.cardinal new_state.found_words = List.length target_words then (
-    Printf.printf "Congrats! You found all the words. :)\n";
-    stats_summary new_state match_counter hint_counter start_time;
-    exit 0)
-  else
-    game_loop new_state match_counter hint_counter max_hints accepted_words
-      target_words word_positions start_time
-
-let print_theme state =
-  Printf.printf "%s\n" state.theme;
-  Cs3110_fin.Logic.print_grid state.grid state.found_words
-    GridData.word_positions
-
-(* Handle all the theme selection *)
-let select_theme () =
-  print_endline
-    "Choose a theme to play by typing the associated number with it below. To \
-     exit out of the game at any time, simply type q.";
-  print_endline "1. Fall Fun";
-  print_endline "2. Well-Suited";
-  print_endline "3. To Your Health";
-  print_endline "4. Extremely Online";
-  let theme_choice = read_int () in
-  match theme_choice with
-  | 1 ->
-      ( GridData.initial_grid,
-        GridData.target_words,
-        GridData.word_positions,
-        "Fall Fun" )
-  | 2 ->
-      ( GridData.nice_fit,
-        GridData.nice_fit_target,
-        GridData.word_positions,
-        "Well-Suited" )
-  | 3 ->
-      ( GridData.to_your_health,
-        GridData.to_your_health_target,
-        GridData.to_your_health_position,
-        "To Your Health" )
-  | 4 ->
-      ( GridData.extremely_online,
-        GridData.extremely_online_target,
-        GridData.extremely_online_positions,
-        "Extremely Online" )
-  | 5 ->
-      ( GridData.beatlemania,
-        GridData.beatlemania_target,
-        GridData.extremely_online_positions,
-        "Beatlemania!" )
-  | _ ->
-      ( GridData.initial_grid,
-        GridData.target_words,
-        GridData.word_positions,
-        "Invalid theme." )
-
 let print_theme_info grid theme word_positions =
   print_endline ("Theme: " ^ theme);
-  Cs3110_fin.Logic.print_grid grid BatSet.empty word_positions
+  Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions
 
 (* How many GUI windows are actively running*)
 let window_count = ref 1
@@ -129,16 +41,59 @@ let destroy_window () =
   if !window_count < 1 then GMain.quit () else ()
 
 let make_game_Window parent grid target_words word_positions theme =
-  print_theme_info grid theme word_positions;
+  (* Create new window *)
+  let game_Window = GWindow.window ~title:theme ~border_width:20 () in
+  window_count := !window_count + 1;
+
+  (* Set up exit function when the window is closed *)
+  ignore (game_Window#connect#destroy ~callback:destroy_window);
+
+  (* Create vertical element box with 20 px of padding *)
+  let vbox = GPack.vbox ~border_width:20 ~packing:game_Window#add () in
+
+  (* Create game title with font 15*)
+  let title_label = GMisc.label ~text:theme ~packing:vbox#pack () in
+  title_label#misc#modify_font (GPango.font_description_from_string "Serif 15");
+
+  let grid_box = GPack.vbox ~border_width:0 ~packing:vbox#pack () in
+  (* Add a label to the new window *)
+  ignore (GMisc.label ~markup:"" ~packing:grid_box#pack ());
+
+  (* Create a text entry box *)
+  let text_entry = GEdit.entry ~packing:vbox#add () in
+
+  (* Create a button *)
+  let button = GButton.button ~label:"Submit" ~packing:vbox#add () in
+
+  Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions grid_box;
 
   let accepted_words =
     Cs3110_fin.Logic.load_words "data/filtered_accepted_words.csv"
   in
-
-  let initial_state = Cs3110_fin.Logic.initialize_game grid theme in
+  let state = ref (Cs3110_fin.Logic.initialize_game grid theme) in
   let start_time = Unix.gettimeofday () in
-  game_loop initial_state match_counter hint_counter max_hints accepted_words
-    target_words word_positions start_time
+  (* Connect the button click event to update the label's text *)
+  ignore
+    (button#connect#clicked ~callback:(fun () ->
+         let guess = text_entry#text in
+         if guess = "q" then (
+           stats_summary !state match_counter hint_counter start_time;
+           exit 0);
+         let new_state =
+           Cs3110_fin.Logic.process_input !state guess target_words
+             match_counter hint_counter max_hints accepted_words word_positions
+         in
+         Cs3110_fin.Logic.show_grid new_state.grid new_state.found_words
+           word_positions grid_box;
+         game_Window#show ();
+         if BatSet.cardinal new_state.found_words = List.length target_words
+         then (
+           Printf.printf "Congrats! You found all the words. :)\n";
+           stats_summary new_state match_counter hint_counter start_time;
+           exit 0)
+         else state := new_state));
+
+  game_Window#show ()
 
 let make_choose_Window () =
   (* Create new window *)
@@ -194,7 +149,8 @@ let make_choose_Window () =
               GridData.extremely_online_target
               GridData.extremely_online_positions "Extremely Online");
          choose_Window#destroy ()));
-  let button5 = GButton.button ~label:"Beetlemania!" ~packing:vbox#pack () in
+
+  let button5 = GButton.button ~label:"Beatlemania!" ~packing:vbox#pack () in
   (* Set up a callback for the button click event *)
   ignore
     (button5#connect#clicked ~callback:(fun () ->

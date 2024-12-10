@@ -1,4 +1,6 @@
 open Printf
+open GMain
+open GPango
 
 type letter = char
 type grid = letter array array
@@ -32,9 +34,10 @@ let alr_guessed guess guessed_words =
 (* Add the word to the set if it hasn't been guessed yet *)
 
 (*stylizes a given letter*)
-let print_letter letter highlight =
-  if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
-  else Printf.printf "%c " letter
+let get_letter letter highlight =
+  if highlight then
+    Printf.sprintf "<span foreground=\"green\">%c </span>" letter
+  else Printf.sprintf "%c " letter
 
 let is_highlighted (r, c) found_words word_positions =
   List.exists
@@ -42,16 +45,54 @@ let is_highlighted (r, c) found_words word_positions =
       List.mem word found_words && List.mem (r, c) positions)
     word_positions
 
-let print_grid (grid : letter array array) found_words word_positions =
+(**[find_index] is the index of [x] in [arr]*)
+let find_index arr x =
+  let len = Array.length arr in
+  let rec helper_find i =
+    if i >= len then None (* Reached the end of the array *)
+    else if arr.(i) = x then Some i (* Found the element *)
+    else helper_find (i + 1)
+    (* Continue searching *)
+  in
+  helper_find 0
+
+let show_grid (grid : letter array array) found_words word_positions
+    (grid_box : GPack.box) =
   let found_list = BatSet.to_list found_words in
-  Array.iteri
-    (fun r row ->
-      Array.iteri
-        (fun c letter ->
-          print_letter letter (is_highlighted (r, c) found_list word_positions))
-        row;
-      print_newline ())
-    grid
+  let grid_string =
+    Array.fold_left
+      (fun (acc : string) (row : letter array) ->
+        (* Find row index *)
+        let r =
+          match find_index grid row with
+          | None -> failwith "Row not found in grid"
+          | Some index -> index
+        in
+        (* Construct the row's string *)
+        let new_row =
+          Array.fold_left
+            (fun (acc2 : string) (l : letter) ->
+              let c =
+                match find_index row l with
+                | None -> failwith "Letter not found in row"
+                | Some index -> index
+              in
+              acc2
+              ^ get_letter l (is_highlighted (r, c) found_list word_positions))
+            "" row
+        in
+        acc ^ new_row ^ "\n")
+      "" grid
+  in
+  (* Get the list of all children *)
+  let children = grid_box#children in
+  (* Remove each child widget from the container *)
+  List.iter (fun widget -> grid_box#remove widget#coerce) children;
+  (* Create a new label with the desired text *)
+  let new_grid_label = GMisc.label ~markup:grid_string () in
+  grid_box#add new_grid_label#coerce
+
+(* Add the new label to the container grid_box#add !grid_label#coerce *)
 
 (** [handle_guess] updates the state if a target word is found *)
 let handle_guess state guess target_words =
@@ -75,7 +116,7 @@ let hint_highlighter hint_word word_positions grid =
           Array.iteri
             (fun c letter ->
               let highlight = List.mem (r, c) positions in
-              print_letter letter highlight)
+              ignore (get_letter letter highlight))
             row;
           print_newline ())
         grid
