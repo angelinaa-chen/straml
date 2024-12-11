@@ -1,5 +1,5 @@
 (library
  (name cs3110_fin)
- (libraries csv re batteries)
+ (libraries csv re batteries lablgtk3)
  (instrumentation
   (backend bisect_ppx)))
