@@ -67,7 +67,7 @@ module GridData = struct
 
   let target_words =
     [
-      "hayrides"; "pumpkins"; "maze"; "cider"; "doughnuts"; "apples"; "orchards";
+      "orchards"; "hayrides"; "pumpkins"; "maze"; "cider"; "doughnuts"; "apples";
     ]
 
   let extremely_online_target =
@@ -85,17 +85,19 @@ module GridData = struct
 
   let nice_fit_target =
     [
-      "jump"; "birthday"; "leisure"; "business"; "civil"; "strong"; "wellsuited";
+      "wellsuited"; "jump"; "birthday"; "leisure"; "business"; "civil"; "strong";
     ]
 
   let to_your_health_target =
-    [ "nurse"; "dentist"; "medicalcareer"; "surgeon"; "pharmacist"; "doctor" ]
+    [ "medicalcareer"; "nurse"; "dentist"; "surgeon"; "pharmacist"; "doctor" ]
 
   let beatlemania_target =
-    [ "revolution"; "blackbird"; "songtitles"; "yesterday"; "help"; "taxman" ]
+    [ "songtitles"; "revolution"; "blackbird"; "yesterday"; "help"; "taxman" ]
 
   let word_positions =
     [
+      ( "orchards",
+        [ (4, 0); (3, 1); (4, 2); (3, 2); (3, 3); (4, 4); (3, 4); (4, 5) ] );
       ( "hayrides",
         [ (2, 4); (3, 5); (2, 5); (1, 4); (1, 3); (0, 4); (1, 5); (0, 5) ] );
       ( "pumpkins",
@@ -107,14 +109,10 @@ module GridData = struct
           (7, 2); (6, 3); (5, 4); (4, 3); (5, 3); (5, 2); (4, 1); (5, 0); (6, 1);
         ] );
       ("apples", [ (7, 3); (6, 4); (5, 5); (6, 5); (7, 4); (7, 5) ]);
-      ( "orchards",
-        [ (4, 0); (3, 1); (4, 2); (3, 2); (3, 3); (4, 4); (3, 4); (4, 5) ] );
     ]
 
   let to_your_health_position =
     [
-      ("nurse", [ (0, 1); (0, 2); (1, 1); (0, 0); (1, 0) ]);
-      ("dentist", [ (2, 0); (2, 1); (3, 0); (4, 0); (4, 1); (4, 2); (4, 3) ]);
       ( "medicalcareer",
         [
           (3, 0);
@@ -131,6 +129,8 @@ module GridData = struct
           (6, 2);
           (7, 3);
         ] );
+      ("nurse", [ (0, 1); (0, 2); (1, 1); (0, 0); (1, 0) ]);
+      ("dentist", [ (2, 0); (2, 1); (3, 0); (4, 0); (4, 1); (4, 2); (4, 3) ]);
       ("surgeon", [ (7, 2); (7, 1); (7, 0); (6, 0); (5, 0); (5, 1); (6, 1) ]);
       ( "pharmacist",
         [
@@ -150,14 +150,6 @@ module GridData = struct
 
   let extremely_online_positions =
     [
-      ("tweet", [ (0, 0); (0, 1); (1, 0); (2, 0); (3, 0) ]);
-      ("report", [ (5, 0); (6, 0); (6, 1); (7, 2); (7, 1); (7, 0) ]);
-      ("share", [ (3, 0); (4, 0); (3, 1); (2, 1); (2, 2) ]);
-      ("follow", [ (1, 4); (0, 5); (1, 5); (2, 5); (2, 4); (2, 3) ]);
-      ("comment", [ (3, 2); (4, 2); (3, 3); (4, 4); (4, 5); (3, 5); (3, 4) ]);
-      ("post", [ (5, 5); (6, 5); (7, 4); (7, 5) ]);
-      ("like", [ (5, 3); (6, 3); (5, 2); (4, 1) ]);
-      ("report", [ (5, 0); (6, 0); (6, 1); (7, 2); (7, 1); (7, 0) ]);
       ( "socialmedia",
         [
           (2, 0);
@@ -172,14 +164,18 @@ module GridData = struct
           (5, 4);
           (4, 3);
         ] );
+      ("tweet", [ (0, 0); (0, 1); (1, 0); (2, 0); (3, 0) ]);
+      ("report", [ (5, 0); (6, 0); (6, 1); (7, 2); (7, 1); (7, 0) ]);
+      ("share", [ (3, 0); (4, 0); (3, 1); (2, 1); (2, 2) ]);
+      ("follow", [ (1, 4); (0, 5); (1, 5); (2, 5); (2, 4); (2, 3) ]);
+      ("comment", [ (3, 2); (4, 2); (3, 3); (4, 4); (4, 5); (3, 5); (3, 4) ]);
+      ("post", [ (5, 5); (6, 5); (7, 4); (7, 5) ]);
+      ("like", [ (5, 3); (6, 3); (5, 2); (4, 1) ]);
+      ("report", [ (5, 0); (6, 0); (6, 1); (7, 2); (7, 1); (7, 0) ]);
     ]
 
   let nice_fit_position =
     [
-      ("jump", [ (0, 2); (0, 1); (1, 1); (0, 0) ]);
-      ( "birthday",
-        [ (0, 3); (1, 2); (2, 2); (1, 1); (2, 1); (3, 2); (4, 2); (3, 1) ] );
-      ("leisure", [ (0, 2); (0, 3); (1, 4); (2, 5); (1, 5); (0, 4); (0, 5) ]);
       ( "wellsuited",
         [
           (4, 0);
@@ -193,9 +189,54 @@ module GridData = struct
           (4, 5);
           (3, 5);
         ] );
+      ("jump", [ (0, 2); (0, 1); (1, 1); (0, 0) ]);
+      ( "birthday",
+        [ (0, 3); (1, 2); (2, 2); (1, 1); (2, 1); (3, 2); (4, 2); (3, 1) ] );
+      ("leisure", [ (0, 2); (0, 3); (1, 4); (2, 5); (1, 5); (0, 4); (0, 5) ]);
       ( "business",
         [ (4, 2); (5, 1); (5, 0); (6, 0); (7, 0); (6, 1); (5, 2); (6, 3) ] );
       ("strong", [ (7, 4); (7, 5); (6, 5); (5, 5); (5, 4); (5, 3) ]);
       ("civil", [ (6, 2); (7, 1); (7, 2); (7, 3); (6, 4) ]);
+    ]
+
+  let beetlemania_position =
+    [
+      ( "songtitles",
+        [
+          (5, 2);
+          (4, 1);
+          (3, 0);
+          (3, 1);
+          (2, 2);
+          (2, 3);
+          (3, 3);
+          (4, 4);
+          (5, 4);
+          (6, 5);
+        ] );
+      ( "revolution",
+        [
+          (2, 0);
+          (2, 1);
+          (1, 2);
+          (1, 3);
+          (2, 4);
+          (3, 4);
+          (2, 5);
+          (3, 5);
+          (4, 5);
+          (5, 5);
+          (3, 5);
+        ] );
+      ( "blackbird",
+        [
+          (7, 5); (7, 4); (6, 4); (6, 3); (6, 2); (5, 3); (4, 3); (4, 2); (3, 2);
+        ] );
+      ( "yesterday",
+        [
+          (7, 3); (7, 2); (6, 1); (7, 1); (7, 0); (6, 0); (5, 0); (5, 1); (4, 0);
+        ] );
+      ("help", [ (1, 5); (1, 4); (0, 5); (0, 4) ]);
+      ("taxman", [ (1, 1); (1, 0); (0, 0); (0, 1); (0, 2); (0, 3) ]);
     ]
 end
