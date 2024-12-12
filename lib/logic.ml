@@ -50,7 +50,6 @@ let print_letter_green letter highlight =
   if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
   else Printf.printf "%c " letter
 
-
 let print_letter_blue letter highlight =
   if highlight then Printf.printf "\027[1;34m%c\027[0m " letter
   else Printf.printf "%c " letter
@@ -61,17 +60,20 @@ let is_highlighted (r, c) found_words word_positions =
       List.mem word found_words && List.mem (r, c) positions)
     word_positions
 
-(**[find_index] is the index of [x] in [arr]*)
-let find_index arr x =
+(**[find_index] is the index of each unique [instance] of [x] in [arr]*)
+let find_index arr x instance =
   let len = Array.length arr in
-  let rec helper_find i =
+  let rec helper_find i count =
     if i >= len then None (* Reached the end of the array *)
-    else if arr.(i) = x then Some i (* Found the element *)
-    else helper_find (i + 1)
-    (* Continue searching *)
+    else if arr.(i) = x then
+      if count = instance then Some i (* Found the desired instance *)
+      else helper_find (i + 1) (count + 1) (* Skip this instance *)
+    else helper_find (i + 1) count (* Continue searching *)
   in
-  helper_find 0
+  helper_find 0 0
 
+(**[show_grid] displays [grid] in [grid_box], higlighting each grid position in
+   [word_positions] that spell a word in [found_words]*)
 let show_grid (grid : letter array array) found_words word_positions
     (grid_box : GPack.box) =
   let found_list = BatSet.to_list found_words in
@@ -80,16 +82,25 @@ let show_grid (grid : letter array array) found_words word_positions
       (fun (acc : string) (row : letter array) ->
         (* Find row index *)
         let r =
-          match find_index grid row with
+          match find_index grid row 0 with
           | None -> failwith "Row not found in grid"
           | Some index -> index
         in
+        (* Initialize instance_counts array mapping to ASCII values of 'A' -
+           'Z' *)
+        let instance_counts = Array.make 26 0 in
         (* Construct the row's string *)
         let new_row =
           Array.fold_left
             (fun (acc2 : string) (l : letter) ->
+              (*'A' - 'Z' map to ASCII values 65 - 90*)
+              let char_code = Char.code l - 65 in
+              (* Determine the specific instance of l within the row (to avoid
+                 mapping multiple occurences of a letter to the same index) *)
+              let instance = instance_counts.(char_code) in
+              instance_counts.(char_code) <- instance + 1;
               let c =
-                match find_index row l with
+                match find_index row l instance with
                 | None -> failwith "Letter not found in row"
                 | Some index -> index
               in
@@ -109,19 +120,11 @@ let show_grid (grid : letter array array) found_words word_positions
   grid_box#add new_grid_label#coerce
 
 (* Add the new label to the container grid_box#add !grid_label#coerce *)
-(*   Array.iteri
-    (fun r row ->
-      Array.iteri
-        (fun c letter ->
-          if List.mem (r, c) (snd (List.hd word_positions)) then
-            print_letter_yellow letter
-              (is_highlighted (r, c) found_list word_positions)
-          else
-            print_letter_blue letter
-              (is_highlighted (r, c) found_list word_positions))
-        row;
-      print_newline ())
-    grid *)
+(* Array.iteri (fun r row -> Array.iteri (fun c letter -> if List.mem (r, c)
+   (snd (List.hd word_positions)) then print_letter_yellow letter
+   (is_highlighted (r, c) found_list word_positions) else print_letter_blue
+   letter (is_highlighted (r, c) found_list word_positions)) row; print_newline
+   ()) grid *)
 
 (** [handle_guess] updates the state if a target word is found *)
 let handle_guess state guess target_words =
@@ -146,7 +149,7 @@ let hint_highlighter hint_word word_positions grid =
             (fun c letter ->
               let highlight = List.mem (r, c) positions in
               ignore (get_letter letter highlight))
-(*               print_letter_green letter highlight) *)
+            (* print_letter_green letter highlight) *)
             row;
           print_newline ())
         grid
