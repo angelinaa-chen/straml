@@ -88,6 +88,7 @@ let make_instruction_window instruction_button =
 (**[make_choose_window] creates a window with buttons in which the user can
    select a theme to play, recursively is called if user wants to start game
    again*)
+
 let rec make_choose_window () =
   (*BEGIN INTERNAL FUNCTION
     DEFINITIONS-----------------------------------------------------*)
@@ -186,7 +187,7 @@ let rec make_choose_window () =
     (* Create a button *)
     let button = GButton.button ~label:"Submit" ~packing:vbox#add () in
 
-    Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions grid_box;
+    Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions grid_box 1;
 
     let accepted_words =
       Cs3110_fin.Logic.load_words "data/filtered_accepted_words.csv"
@@ -197,10 +198,15 @@ let rec make_choose_window () =
     ignore
       (button#connect#clicked ~callback:(fun () ->
            let guess = text_entry#text in
-           match guess with
+           match String.lowercase_ascii guess with
            | "q" ->
                stats_summary !state match_counter hint_counter start_time;
                game_Window#destroy ()
+           | "hint" ->
+               Printf.printf "Processing hint request...\n";
+               Cs3110_fin.Logic.hint_revealer !state word_positions target_words
+                 accepted_words grid_box 2;
+               game_Window#show ()
            | _ ->
                let new_state =
                  Cs3110_fin.Logic.process_input !state guess target_words
@@ -208,7 +214,7 @@ let rec make_choose_window () =
                    word_positions
                in
                Cs3110_fin.Logic.show_grid new_state.grid new_state.found_words
-                 word_positions grid_box;
+                 word_positions grid_box 1;
                game_Window#show ();
                if
                  BatSet.cardinal new_state.found_words
@@ -216,7 +222,7 @@ let rec make_choose_window () =
                then (
                  Printf.printf "Congrats! You found all the words. :)\n";
                  stats_summary new_state match_counter hint_counter start_time;
-                 exit 0)
+                 game_Window#destroy ())
                else state := new_state));
 
     game_Window#show ()

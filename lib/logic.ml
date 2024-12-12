@@ -35,9 +35,19 @@ let alr_guessed guess guessed_words =
 
 (*stylizes a given letter*)
 (* GUI Function *)
-let get_letter letter highlight =
-  if highlight then
-    Printf.sprintf "<span foreground=\"green\">%c </span>" letter
+
+(**[get_letter] returns a letter as plaint text or highlighted if [highlight] is
+   true according to the [highlight mode] selection where 1 - green, 2 - blue,
+   and 3 - red*)
+let get_letter letter highlight highlight_mode =
+  if highlight = true then
+    if highlight_mode = 1 then
+      Printf.sprintf "<span foreground=\"green\">%c </span>" letter
+    else if highlight_mode = 2 then
+      Printf.sprintf "<span foreground=\"blue\">%c </span>" letter
+    else if highlight_mode = 3 then
+      Printf.sprintf "<span foreground=\"red\">%c </span>" letter
+    else Printf.sprintf "%c " letter
   else Printf.sprintf "%c " letter
 
 (* Terminal color functions *)
@@ -73,9 +83,11 @@ let find_index arr x instance =
   helper_find 0 0
 
 (**[show_grid] displays [grid] in [grid_box], higlighting each grid position in
-   [word_positions] that spell a word in [found_words]*)
+   [word_positions] that spell a word in [found_words], it highlights each
+   character according to the [highlight_mode] selection*)
 let show_grid (grid : letter array array) found_words word_positions
-    (grid_box : GPack.box) =
+    (grid_box : GPack.box) highlight_mode =
+  print_endline "show_grid called";
   let found_list = BatSet.to_list found_words in
   let grid_string =
     Array.fold_left
@@ -105,7 +117,9 @@ let show_grid (grid : letter array array) found_words word_positions
                 | Some index -> index
               in
               acc2
-              ^ get_letter l (is_highlighted (r, c) found_list word_positions))
+              ^ get_letter l
+                  (is_highlighted (r, c) found_list word_positions)
+                  highlight_mode)
             "" row
         in
         acc ^ new_row ^ "\n")
@@ -140,22 +154,18 @@ let word_to_highlight state theme_target_words =
     (fun word -> not (BatSet.mem word state.found_words))
     theme_target_words
 
-let hint_highlighter hint_word word_positions grid =
+let hint_highlighter hint_word word_positions grid found_words grid_box
+    highlight_mode =
+  print_endline "hint_highlighter called";
   match List.assoc_opt hint_word word_positions with
   | Some positions ->
-      Array.iteri
-        (fun r row ->
-          Array.iteri
-            (fun c letter ->
-              let highlight = List.mem (r, c) positions in
-              ignore (get_letter letter highlight))
-            (* print_letter_green letter highlight) *)
-            row;
-          print_newline ())
-        grid
+      show_grid
+        (grid : letter array array)
+        found_words word_positions grid_box highlight_mode
   | None -> Printf.printf "Hint word not found in word positions.\n"
 
-let hint_revealer state word_positions target_words accepted_words =
+let hint_revealer state word_positions target_words accepted_words grid_box
+    highlight_mode =
   match word_to_highlight state target_words with
   | None -> Printf.printf "Hints not available. All words have been found!\n"
   | Some hint_word ->
@@ -171,7 +181,8 @@ let hint_revealer state word_positions target_words accepted_words =
           (3 - valid_guesses_count)
       else
         (* Printf.printf "Hint word: %s\n" hint_word; *)
-        hint_highlighter hint_word word_positions state.grid
+        hint_highlighter hint_word word_positions state.grid state.found_words
+          grid_box highlight_mode
 
 let is_word_in_grid grid word =
   let word = String.uppercase_ascii word in
@@ -216,40 +227,34 @@ let is_spangram word spangram = if word = spangram then true else false
 
 let process_input state word target_words match_counter hint_counter max_hints
     accepted_words word_positions =
-  match String.lowercase_ascii word with
-  | "hint" ->
-      Printf.printf "Processing hint request...\n";
-      hint_revealer state word_positions target_words accepted_words;
-      state (* Return the same state after processing a hint *)
-  | _ ->
-      let guessed_words_updated = BatSet.add word state.guessed_words in
-      if BatSet.mem word state.guessed_words then (
-        Printf.printf "You've already guessed that word!\n";
-        state)
-      else if List.mem word target_words then (
-        incr match_counter;
-        if List.hd target_words = word then (
-          Printf.printf "You found the Spangram! Total matches: %d\n"
-            !match_counter;
-          {
-            state with
-            found_words = BatSet.add word state.found_words;
-            guessed_words = guessed_words_updated;
-          })
-        else (
-          Printf.printf "Match found! Total matches: %d\n" !match_counter;
-          {
-            state with
-            found_words = BatSet.add word state.found_words;
-            guessed_words = guessed_words_updated;
-          }))
-      else if is_word_in_grid state.grid word && BatSet.mem word accepted_words
-      then (
-        incr hint_counter;
-        Printf.printf
-          "Word count towards hint incremented. Total words guessed: %d\n"
-          !hint_counter;
-        { state with guessed_words = guessed_words_updated })
-      else (
-        Printf.printf "Invalid word: %s\n" word;
-        { state with guessed_words = guessed_words_updated })
+  let guessed_words_updated = BatSet.add word state.guessed_words in
+  if BatSet.mem word state.guessed_words then (
+    Printf.printf "You've already guessed that word!\n";
+    state)
+  else if List.mem word target_words then (
+    incr match_counter;
+    if List.hd target_words = word then (
+      Printf.printf "You found the Spangram! Total matches: %d\n" !match_counter;
+      {
+        state with
+        found_words = BatSet.add word state.found_words;
+        guessed_words = guessed_words_updated;
+      })
+    else (
+      Printf.printf "Match found! Total matches: %d\n" !match_counter;
+      {
+        state with
+        found_words = BatSet.add word state.found_words;
+        guessed_words = guessed_words_updated;
+      }
+      (*IMPORTANT VVVVVVVVVVVVVVVV did you mean "if len(word)>4 & word in
+        accepted_words.csv"*)))
+  else if is_word_in_grid state.grid word && BatSet.mem word accepted_words then (
+    incr hint_counter;
+    Printf.printf
+      "Word count towards hint incremented. Total words guessed: %d\n"
+      !hint_counter;
+    { state with guessed_words = guessed_words_updated })
+  else (
+    Printf.printf "Invalid word: %s\n" word;
+    { state with guessed_words = guessed_words_updated })
