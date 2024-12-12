@@ -6,6 +6,142 @@ open Cs3110_fin.Logic
 open Cs3110_fin.Grid_data
 open Unix
 
+(**Loads a puzzle grid from the given [filename] csv*)
+let load_grid filename : char array array =
+  let lines = ref [] in
+  let ic = open_in filename in
+  try
+    while true do
+      let line = input_line ic in
+      let chars =
+        Array.of_list
+          (List.map (fun s -> s.[0]) (String.split_on_char ',' line))
+      in
+      lines := chars :: !lines
+    done;
+    [||] (* unreachable, required to satisfy type *)
+  with End_of_file ->
+    close_in ic;
+    (* reverse (for order) and convert to array *)
+    Array.of_list (List.rev !lines)
+
+(** loads a list of target words from a csv [filename]*)
+let load_target_words filename =
+  let ic = open_in filename in
+  try
+    let line = input_line ic in
+    let words = String.split_on_char ',' line in
+    let trimmed_words = List.map String.trim words in
+    close_in ic;
+    trimmed_words
+  with
+  | End_of_file ->
+      close_in ic;
+      []
+  | e ->
+      close_in ic;
+      raise e
+
+(** loads an (int * int) list list of positions from a csv [filename], order
+    matters and corresponds to the order of target words*)
+let load_positions filename : (int * int) list list =
+  (* parse a single position string of format (x, y) *)
+  let parse_position pos =
+    try
+      let pos = String.trim pos in
+      if
+        String.length pos < 5
+        || pos.[0] <> '('
+        || pos.[String.length pos - 1] <> ')'
+      then raise (Failure ("Invalid position format in: " ^ pos));
+      let pos = String.sub pos 1 (String.length pos - 2) in
+      let nums = String.split_on_char ',' pos in
+      match nums with
+      | [ r; c ] ->
+          let int_r : int = int_of_string (String.trim r) in
+          let int_c = int_of_string (String.trim c) in
+          (int_r, int_c)
+      | _ -> raise (Failure ("Invalid position format in: " ^ pos))
+    with _ -> raise (Failure ("Invalid position format in: " ^ pos))
+  in
+
+  (* parse a line of positions *)
+  let parse_line line =
+    let positions = String.split_on_char ';' line in
+    List.map parse_position positions
+  in
+
+  (* open file, read all lines *)
+  let ic = open_in filename in
+  let lines = ref [] in
+  try
+    while true do
+      let line = input_line ic in
+      lines := line :: !lines
+    done;
+    []
+  with End_of_file ->
+    close_in ic;
+    List.rev_map parse_line !lines
+
+(** constructs a (string * (int * int) list list) data type combining target
+    words and their positions. This is the required input type for word
+    positions in the functions that use it*)
+let construct_word_positions target_words positions_list =
+  List.map2
+    (fun words positions -> (words, positions))
+    target_words positions_list
+
+(* print functions for debugging*)
+(* let print_pair_list lst = List.iter (fun (a, b) -> Printf.printf "%s: [" a;
+   List.iter (fun (x, y) -> Printf.printf "(%d, %d) " x y) b; Printf.printf
+   "]\n") lst
+
+   let print_char_grid (grid : char array array) : unit = Array.iter (fun row ->
+   Array.iter (fun c -> Printf.printf "%c " c) row; print_newline ()) grid
+
+   let print_list list = List.iter (fun elt -> print_endline elt) list *)
+
+(*fall fun*)
+let fall_fun_grid = load_grid "data/fall_fun/grid.csv"
+let fall_fun_target = load_target_words "data/fall_fun/target.csv"
+
+let fall_fun_positions =
+  construct_word_positions fall_fun_target
+    (load_positions "data/fall_fun/positions.csv")
+
+(*nice fit*)
+let nice_fit_grid = load_grid "data/nice_fit/grid.csv"
+let nice_fit_target = load_target_words "data/nice_fit/target.csv"
+
+let nice_fit_positions =
+  construct_word_positions nice_fit_target
+    (load_positions "data/nice_fit/positions.csv")
+
+(*to your health*)
+let health_grid = load_grid "data/health/grid.csv"
+let health_target = load_target_words "data/health/target.csv"
+
+let health_positions =
+  construct_word_positions health_target
+    (load_positions "data/health/positions.csv")
+
+(*online*)
+let online_grid = load_grid "data/online/grid.csv"
+let online_target = load_target_words "data/online/target.csv"
+
+let online_positions =
+  construct_word_positions online_target
+    (load_positions "data/online/positions.csv")
+
+(*beatle*)
+let beatle_grid = load_grid "data/beatle/grid.csv"
+let beatle_target = load_target_words "data/beatle/target.csv"
+
+let beatle_positions =
+  construct_word_positions beatle_target
+    (load_positions "data/beatle/positions.csv")
+
 (* Initialize GTK *)
 let () = ignore (GMain.init ())
 
@@ -268,17 +404,21 @@ let rec make_choose_window () =
   ignore
     (button1#connect#clicked ~callback:(fun () ->
          ignore
-           (make_game_window choose_window GridData.initial_grid
-              GridData.target_words GridData.word_positions "Fall Fun");
+           (make_game_window choose_window fall_fun_grid fall_fun_target
+              fall_fun_positions "Fall Fun");
+         (* (make_game_window choose_window GridData.initial_grid
+            GridData.target_words GridData.word_positions "Fall Fun"); *)
          choose_window#destroy ()));
 
-  let button2 = GButton.button ~label:"Well-Suited" ~packing:vbox#pack () in
+  let button2 = GButton.button ~label:"Nice Fit" ~packing:vbox#pack () in
   (* Set up a callback for the button click event *)
   ignore
     (button2#connect#clicked ~callback:(fun () ->
          ignore
-           (make_game_window choose_window GridData.nice_fit
-              GridData.nice_fit_target GridData.word_positions "Well-Suited");
+           (make_game_window choose_window nice_fit_grid nice_fit_target
+              nice_fit_positions "Nice Fit");
+         (* (make_game_window choose_window GridData.nice_fit
+            GridData.nice_fit_target GridData.word_positions "Well-Suited"); *)
          choose_window#destroy ()));
 
   let button3 = GButton.button ~label:"To Your Health" ~packing:vbox#pack () in
@@ -286,9 +426,11 @@ let rec make_choose_window () =
   ignore
     (button3#connect#clicked ~callback:(fun () ->
          ignore
-           (make_game_window choose_window GridData.to_your_health
-              GridData.to_your_health_target GridData.to_your_health_position
-              "To Your Health");
+           (make_game_window choose_window health_grid health_target
+              health_positions "To Your Health");
+         (* (make_game_window choose_window GridData.to_your_health
+            GridData.to_your_health_target GridData.to_your_health_position "To
+            Your Health"); *)
          choose_window#destroy ()));
 
   let button4 =
@@ -298,9 +440,11 @@ let rec make_choose_window () =
   ignore
     (button4#connect#clicked ~callback:(fun () ->
          ignore
-           (make_game_window choose_window GridData.extremely_online
-              GridData.extremely_online_target
-              GridData.extremely_online_positions "Extremely Online");
+           (make_game_window choose_window online_grid online_target
+              online_positions "Extremely Online");
+         (* (make_game_window choose_window GridData.extremely_online
+            GridData.extremely_online_target GridData.extremely_online_positions
+            "Extremely Online"); *)
          choose_window#destroy ()));
 
   let button5 = GButton.button ~label:"Beatlemania!" ~packing:vbox#pack () in
@@ -308,9 +452,11 @@ let rec make_choose_window () =
   ignore
     (button5#connect#clicked ~callback:(fun () ->
          ignore
-           (make_game_window choose_window GridData.beatlemania
-              GridData.beatlemania_target GridData.extremely_online_positions
-              "Beatlemania!");
+           (make_game_window choose_window beatle_grid beatle_target
+              beatle_positions "Beatlemania!");
+         (* (make_game_window choose_window GridData.beatlemania
+            GridData.beatlemania_target GridData.extremely_online_positions
+            "Beatlemania!"); *)
          choose_window#destroy ()));
   choose_window#show ()
 
