@@ -1,3 +1,4 @@
 (test
  (name test_cs3110_fin)
- (libraries cs3110_fin ounit2))
+ (libraries cs3110_fin ounit2)
+ (flags :standard -ccopt -L/opt/homebrew/Cellar/harfbuzz/10.1.0/lib))

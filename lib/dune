@@ -2,4 +2,5 @@
  (name cs3110_fin)
  (libraries csv re batteries lablgtk3)
  (instrumentation
-  (backend bisect_ppx)))
+  (backend bisect_ppx))
+  (flags :standard -ccopt -L/opt/homebrew/Cellar/harfbuzz/10.1.0/lib))
