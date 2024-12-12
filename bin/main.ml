@@ -3,7 +3,6 @@ open GPango
 open Gtk
 open Printf
 open Cs3110_fin.Logic
-open Cs3110_fin.Grid_data
 open Unix
 
 (**Loads a puzzle grid from the given [filename] csv*)
