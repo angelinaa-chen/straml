@@ -184,19 +184,22 @@ let rec make_choose_window () =
     (* Create a text entry box *)
     let text_entry = GEdit.entry ~packing:vbox#add () in
 
-    (* Create a button *)
-    let button = GButton.button ~label:"Submit" ~packing:vbox#add () in
+    let hbox = GPack.hbox ~spacing:20 ~packing:vbox#pack () in
 
-    Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions grid_box 1;
+    (* Create a button *)
+    let submit_button = GButton.button ~label:"Submit" ~packing:hbox#add () in
+    (* Create a button *)
+    let hint_button = GButton.button ~label:"Hint" ~packing:hbox#add () in
 
     let accepted_words =
       Cs3110_fin.Logic.load_words "data/filtered_accepted_words.csv"
     in
     let state = ref (Cs3110_fin.Logic.initialize_game grid theme) in
     let start_time = Unix.gettimeofday () in
-    (* Connect the button click event to update the label's text *)
+
+    (* Connect submit_button to process input behavior*)
     ignore
-      (button#connect#clicked ~callback:(fun () ->
+      (submit_button#connect#clicked ~callback:(fun () ->
            let guess = text_entry#text in
            match String.lowercase_ascii guess with
            | "q" ->
@@ -224,6 +227,17 @@ let rec make_choose_window () =
                  stats_summary new_state match_counter hint_counter start_time;
                  game_Window#destroy ())
                else state := new_state));
+
+    (* Connect hint_button to directly ask for hint*)
+    ignore
+      (hint_button#connect#clicked ~callback:(fun () ->
+           Printf.printf "Processing hint request...\n";
+           Cs3110_fin.Logic.hint_revealer !state word_positions target_words
+             accepted_words grid_box 2;
+           game_Window#show ()));
+
+    (* Show initial grid*)
+    Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions grid_box 1;
 
     game_Window#show ()
   in
