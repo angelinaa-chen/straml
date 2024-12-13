@@ -82,55 +82,65 @@ let find_index arr x instance =
   in
   helper_find 0 0
 
-(**[show_grid] displays [grid] in [grid_box], higlighting each grid position in
-   [word_positions] that spell a word in [found_words], it highlights each
-   character according to the [highlight_mode] selection*)
 let show_grid (grid : letter array array) found_words word_positions
     (grid_box : GPack.box) highlight_mode =
   print_endline "show_grid called";
+
+  (* Convert the set of found words into a list *)
   let found_list = BatSet.to_list found_words in
+
+  (* Create the grid string by iterating over each row and column *)
   let grid_string =
     Array.fold_left
       (fun (acc : string) (row : letter array) ->
-        (* Find row index *)
+        (* Find the index of the row *)
         let r =
           match find_index grid row 0 with
           | None -> failwith "Row not found in grid"
           | Some index -> index
         in
-        (* Initialize instance_counts array mapping to ASCII values of 'A' -
-           'Z' *)
+        (* Initialize the array to keep track of letter instances in the row *)
         let instance_counts = Array.make 26 0 in
-        (* Construct the row's string *)
+        (* Construct the row's string with highlighted letters *)
         let new_row =
           Array.fold_left
             (fun (acc2 : string) (l : letter) ->
-              (*'A' - 'Z' map to ASCII values 65 - 90*)
+              (* Map 'A' - 'Z' to ASCII values 65 - 90 *)
               let char_code = Char.code l - 65 in
-              (* Determine the specific instance of l within the row (to avoid
-                 mapping multiple occurences of a letter to the same index) *)
+              (* Track occurrences of the same letter in the row *)
               let instance = instance_counts.(char_code) in
               instance_counts.(char_code) <- instance + 1;
+              (* Find the index of the letter within the row *)
               let c =
                 match find_index row l instance with
                 | None -> failwith "Letter not found in row"
                 | Some index -> index
               in
+              (* Append the letter with the appropriate highlight *)
               acc2
               ^ get_letter l
                   (is_highlighted (r, c) found_list word_positions)
                   highlight_mode)
             "" row
         in
+        (* Add the new row to the accumulated grid string *)
         acc ^ new_row ^ "\n")
       "" grid
   in
-  (* Get the list of all children *)
+
+  (* Get the list of all children in the grid box container *)
   let children = grid_box#children in
-  (* Remove each child widget from the container *)
+  (* Remove all existing widgets from the grid box *)
   List.iter (fun widget -> grid_box#remove widget#coerce) children;
-  (* Create a new label with the desired text *)
+
+  (* Create a new label for the grid with the markup string *)
   let new_grid_label = GMisc.label ~markup:grid_string () in
+
+  (* Set the font for the label to a monospace font for uniform letter width *)
+  new_grid_label#misc#modify_font
+    (GPango.font_description_from_string "Monospace 30");
+
+  (* Add the new label to the grid box container *)
   grid_box#add new_grid_label#coerce
 
 (* Add the new label to the container grid_box#add !grid_label#coerce *)

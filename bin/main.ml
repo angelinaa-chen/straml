@@ -292,8 +292,7 @@ let rec make_choose_window () =
     (* Set up exit function when the window is closed *)
     ignore (game_Window#connect#destroy ~callback:destroy_window);
 
-    (* Create vertical element box for central alignment *)
-    let vbox = GPack.vbox ~spacing:10 ~packing:game_Window#add () in
+    let vbox = GPack.vbox ~spacing:20 ~packing:game_Window#add () in
     vbox#set_halign `CENTER;
     vbox#set_valign `CENTER;
 
@@ -306,17 +305,15 @@ let rec make_choose_window () =
       (help_button#connect#clicked ~callback:(fun () ->
            make_instruction_window help_button));
 
-    (* Create game title with font size 15 *)
     let title_label =
       GMisc.label ~use_underline:true ~text:theme ~packing:vbox#pack ()
     in
     title_label#misc#modify_font
-      (GPango.font_description_from_string "Serif Bold 20");
+      (GPango.font_description_from_string "Serif Bold 40");
 
     (* Create a box for the game grid *)
     let grid_box = GPack.vbox ~packing:vbox#pack () in
-
-    let monospace_font = GPango.font_description_from_string "Monospace 20" in
+    let monospace_font = GPango.font_description_from_string "Monospace 150" in
 
     let total_width = 420 and num_columns = 6 in
     let spacing = (total_width - (num_columns * 70)) / (num_columns - 1) in
@@ -344,9 +341,18 @@ let rec make_choose_window () =
       done
     done;
 
+    (* Add more vertical space between the grid and the text entry *)
+    let vertical_space_after_grid = 30 in
+    (* Space after grid *)
+    let _spacer =
+      GPack.vbox ~spacing:vertical_space_after_grid ~packing:vbox#pack ()
+    in
+
+    (* Text entry for answers *)
     let text_entry = GEdit.entry ~packing:vbox#pack () in
 
-    let hbox = GPack.hbox ~spacing:20 ~packing:vbox#pack () in
+    (* Add space between the answer box (text entry) and buttons *)
+    let hbox = GPack.hbox ~spacing:30 ~packing:vbox#pack () in
 
     let submit_button = GButton.button ~label:"Submit" ~packing:hbox#pack () in
     let hint_button = GButton.button ~label:"Hint" ~packing:hbox#pack () in
