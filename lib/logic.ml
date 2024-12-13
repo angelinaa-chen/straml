@@ -12,6 +12,10 @@ type game_state = {
   theme : string;
 }
 
+(** [found_words] is the BatSet of target words that have been found.
+    [guessed_words] is the BatSet of all words that have been guessed. [theme]
+    is the puzzle that the user chose to play*)
+
 let initialize_game grid theme =
   { grid; found_words = BatSet.empty; guessed_words = BatSet.empty; theme }
 
@@ -262,7 +266,7 @@ let hint_revealer state word_positions target_words accepted_words grid_box
         hint_highlighter hint_word word_positions state.grid state.found_words
           grid_box highlight_mode)
 
-let process_input state word target_words match_counter hint_counter max_hints
+let process_input state word target_words match_counter guess_counter max_hints
     accepted_words word_positions =
   let guessed_words_updated = BatSet.add word state.guessed_words in
   if BatSet.mem word state.guessed_words then (
@@ -285,10 +289,10 @@ let process_input state word target_words match_counter hint_counter max_hints
         guessed_words = guessed_words_updated;
       }))
   else if is_word_in_grid state.grid word && BatSet.mem word accepted_words then (
-    incr hint_counter;
+    incr guess_counter;
     Printf.printf
       "Word count towards hint incremented. Total words guessed: %d\n"
-      !hint_counter;
+      !guess_counter;
     { state with guessed_words = guessed_words_updated })
   else (
     Printf.printf "Invalid word: %s\n" word;
