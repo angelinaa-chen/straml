@@ -373,8 +373,7 @@ let rec make_choose_window () =
       (hint_button#connect#clicked ~callback:(fun () ->
            Printf.printf "Processing hint request...\n";
            Cs3110_fin.Logic.hint_revealer !state word_positions target_words
-             accepted_words grid_box 2;
-           game_Window#show ()));
+             accepted_words grid_box 2));
 
     (* Show initial grid*)
     Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions grid_box 1;
