@@ -114,11 +114,18 @@ let show_grid (grid : letter array array) found_words word_positions
                   | None -> failwith "Letter not found in row"
                   | Some index -> index [@coverage off]
                 in
-                (* Append the letter with the appropriate highlight *)
-                acc2
-                ^ get_letter l
-                    (is_highlighted (r, c) found_list word_positions)
-                    highlight_mode)
+                (*Highlight character yellow if it belongs to a spangram*)
+                if List.mem (r, c) (snd (List.hd word_positions)) then
+                  acc2
+                  ^ get_letter l
+                      (is_highlighted (r, c) found_list word_positions)
+                      3
+                else
+                  (* Append the letter with the appropriate highlight *)
+                  acc2
+                  ^ get_letter l
+                      (is_highlighted (r, c) found_list word_positions)
+                      highlight_mode)
               "" row [@coverage off])
          in
          (* Add the new row to the accumulated grid string *)
