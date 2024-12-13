@@ -11,14 +11,10 @@ type game_state = {
   guessed_words : string BatSet.t;
   theme : string;
 }
-(** [found_words] is the BatSet of target words that have been found.
-    [guessed_words] is the BatSet of all words that have been guessed. [theme]
-    is the puzzle that the user chose to play*)
 
 let initialize_game grid theme =
   { grid; found_words = BatSet.empty; guessed_words = BatSet.empty; theme }
 
-(* Load words from a file into a BatSet *)
 let load_words path =
   try
     BatFile.lines_of path
@@ -31,7 +27,6 @@ let load_words path =
 let alr_guessed guess guessed_words =
   if BatSet.mem guess guessed_words then guessed_words
   else BatSet.add guess guessed_words
-(* Add the word to the set if it hasn't been guessed yet *)
 
 (*stylizes a given letter*)
 (* GUI Function *)
@@ -51,7 +46,6 @@ let get_letter letter highlight highlight_mode =
   else Printf.sprintf "%c " letter
 
 (* Terminal color functions *)
-
 let print_letter_yellow letter highlight =
   if highlight then Printf.printf "\027[1;33m%c\027[0m " letter
   else Printf.printf "%c " letter
@@ -64,6 +58,8 @@ let print_letter_blue letter highlight =
   if highlight then Printf.printf "\027[1;34m%c\027[0m " letter
   else Printf.printf "%c " letter
 
+(*iterates over each position in a given grid, returns whether or not that
+  position needs to be highlighted based on if it's apart of a found word*)
 let is_highlighted (r, c) found_words word_positions =
   List.exists
     (fun (word, positions) ->
@@ -159,6 +155,8 @@ let handle_guess state guess target_words =
   then { state with found_words = BatSet.add lowercase_guess state.found_words }
   else state
 
+(** finds the next word in [theme_target_words] that has not already been found,
+    to be displayed as a hint*)
 let word_to_highlight state theme_target_words =
   List.find_opt
     (fun word -> not (BatSet.mem word state.found_words))
@@ -173,6 +171,26 @@ let hint_highlighter hint_word word_positions grid found_words grid_box
       show_grid grid temp_hint_found_words word_positions grid_box
         highlight_mode
   | None -> Printf.printf "Hint word not found in word positions.\n"
+
+let hint_revealer state word_positions target_words accepted_words grid_box
+    highlight_mode =
+  match word_to_highlight state target_words with
+  | None -> Printf.printf "Hints not available. All words have been found!\n"
+  | Some hint_word ->
+      let valid_guesses_count =
+        BatSet.filter
+          (fun word -> BatSet.mem word accepted_words)
+          state.guessed_words
+        |> BatSet.to_list |> List.length
+      in
+      if valid_guesses_count < 3 then
+        Printf.printf
+          "Sorry, hint not unlocked yet. Words left to unlock hint: %d\n"
+          (3 - valid_guesses_count)
+      else
+        (* Printf.printf "Hint word: %s\n" hint_word; *)
+        hint_highlighter hint_word word_positions state.grid state.found_words
+          grid_box highlight_mode
 
 let is_word_in_grid grid word =
   let word = String.uppercase_ascii word in
