@@ -145,11 +145,6 @@ let show_grid (grid : letter array array) found_words word_positions
   grid_box#add new_grid_label#coerce [@coverage off]
 
 (* Add the new label to the container grid_box#add !grid_label#coerce *)
-(* Array.iteri (fun r row -> Array.iteri (fun c letter -> if List.mem (r, c)
-   (snd (List.hd word_positions)) then print_letter_yellow letter
-   (is_highlighted (r, c) found_list word_positions) else print_letter_blue
-   letter (is_highlighted (r, c) found_list word_positions)) row; print_newline
-   ()) grid *)
 
 (** [handle_guess] updates the state if a target word is found *)
 let handle_guess state guess target_words =
@@ -262,7 +257,6 @@ let hint_revealer state word_positions target_words accepted_words grid_box
           (3 - valid_guesses_count)
       else (
         Printf.printf "Displaying hint for word: %s\n" hint_word;
-        (* Printf.printf "Hint word: %s\n" hint_word; *)
         hint_highlighter hint_word word_positions state.grid state.found_words
           grid_box highlight_mode)
 

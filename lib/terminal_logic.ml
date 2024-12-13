@@ -108,9 +108,7 @@ let hint_revealer state word_positions target_words accepted_words =
         Printf.printf
           "Sorry, hint not unlocked yet. Words left to unlock hint: %d\n"
           (3 - valid_guesses_count)
-      else (
-        Printf.printf "Hint word: %s\n" hint_word;
-        hint_highlighter hint_word word_positions state.grid)
+      else hint_highlighter hint_word word_positions state.grid
 
 let print_letter letter highlight =
   if highlight then Printf.printf "\027[1;32m%c\027[0m " letter
