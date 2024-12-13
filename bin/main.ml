@@ -386,83 +386,78 @@ let rec make_choose_window () =
     FUNCTIONALITY--------------------------------------------------------------------*)
 
   (* Reset hint and match counters for a new game*)
-  hint_counter := 0;
-  match_counter := 0;
-
-  (* Create new window *)
+  (* hint_counter := 0; match_counter := 0; *)
   let choose_window =
     GWindow.window ~title:"Choose Theme" ~border_width:20 ~width:400 ~height:400
       ()
   in
   window_count := !window_count + 1;
 
-  (* Set up exit function when the window is closed *)
   ignore (choose_window#connect#destroy ~callback:destroy_window);
 
-  (* Create vertical element box with 10 px of padding *)
-  let vbox = GPack.vbox ~spacing:10 ~packing:choose_window#add () in
-  (* Add a label to the new window *)
-  ignore (GMisc.label ~text:"Choose a Theme:" ~packing:vbox#pack ());
+  let vbox = GPack.vbox ~spacing:20 ~packing:choose_window#add () in
+  vbox#set_halign `CENTER;
+  vbox#set_valign `CENTER;
 
-  let button1 = GButton.button ~label:"Fall Fun" ~packing:vbox#pack () in
-  (* Set up a callback for the button click event *)
+  let title_label = GMisc.label ~text:"Choose Theme" ~packing:vbox#pack () in
+  title_label#misc#modify_font
+    (GPango.font_description_from_string "Serif Bold 20");
+
+  let button1 =
+    GButton.button ~label:"Fall Fun" ~packing:vbox#pack ~show:true ()
+  in
+  button1#set_width_request 300;
   ignore
     (button1#connect#clicked ~callback:(fun () ->
          ignore
            (make_game_window choose_window fall_fun_grid fall_fun_target
               fall_fun_positions "Fall Fun");
-         (* (make_game_window choose_window GridData.initial_grid
-            GridData.target_words GridData.word_positions "Fall Fun"); *)
          choose_window#destroy ()));
 
-  let button2 = GButton.button ~label:"Nice Fit" ~packing:vbox#pack () in
-  (* Set up a callback for the button click event *)
+  let button2 =
+    GButton.button ~label:"Nice Fit" ~packing:vbox#pack ~show:true ()
+  in
+  button2#set_width_request 300;
   ignore
     (button2#connect#clicked ~callback:(fun () ->
          ignore
            (make_game_window choose_window nice_fit_grid nice_fit_target
               nice_fit_positions "Nice Fit");
-         (* (make_game_window choose_window GridData.nice_fit
-            GridData.nice_fit_target GridData.word_positions "Well-Suited"); *)
          choose_window#destroy ()));
 
-  let button3 = GButton.button ~label:"To Your Health" ~packing:vbox#pack () in
-  (* Set up a callback for the button click event *)
+  let button3 =
+    GButton.button ~label:"To Your Health" ~packing:vbox#pack ~show:true ()
+  in
+  button3#set_width_request 300;
   ignore
     (button3#connect#clicked ~callback:(fun () ->
          ignore
            (make_game_window choose_window health_grid health_target
               health_positions "To Your Health");
-         (* (make_game_window choose_window GridData.to_your_health
-            GridData.to_your_health_target GridData.to_your_health_position "To
-            Your Health"); *)
          choose_window#destroy ()));
 
   let button4 =
-    GButton.button ~label:"Extremely Online" ~packing:vbox#pack ()
+    GButton.button ~label:"Extremely Online" ~packing:vbox#pack ~show:true ()
   in
-  (* Set up a callback for the button click event *)
+  button4#set_width_request 300;
   ignore
     (button4#connect#clicked ~callback:(fun () ->
          ignore
            (make_game_window choose_window online_grid online_target
               online_positions "Extremely Online");
-         (* (make_game_window choose_window GridData.extremely_online
-            GridData.extremely_online_target GridData.extremely_online_positions
-            "Extremely Online"); *)
          choose_window#destroy ()));
 
-  let button5 = GButton.button ~label:"Beatlemania!" ~packing:vbox#pack () in
-  (* Set up a callback for the button click event *)
+  let button5 =
+    GButton.button ~label:"Beatlemania!" ~packing:vbox#pack ~show:true ()
+  in
+  button5#set_width_request 300;
   ignore
     (button5#connect#clicked ~callback:(fun () ->
          ignore
            (make_game_window choose_window beatle_grid beatle_target
               beatle_positions "Beatlemania!");
-         (* (make_game_window choose_window GridData.beatlemania
-            GridData.beatlemania_target GridData.extremely_online_positions
-            "Beatlemania!"); *)
          choose_window#destroy ()));
+
   choose_window#show ()
 
 let () =
@@ -477,7 +472,7 @@ let () =
   window_count := !window_count + 1;
 
   (* Create vertical element box with 20 px of padding *)
-  let vbox = GPack.vbox ~spacing:50 ~packing:start_window#add () in
+  let vbox = GPack.vbox ~spacing:25 ~packing:start_window#add () in
   vbox#set_halign `CENTER;
   vbox#set_valign `CENTER;
 
@@ -486,7 +481,7 @@ let () =
     (GPango.font_description_from_string "Serif Bold 30");
 
   let phrase_label =
-    GMisc.label ~text:"Find hidden words and uncover the day’s theme."
+    GMisc.label ~text:"Find hidden words and uncover the theme!"
       ~packing:vbox#pack ()
   in
   phrase_label#misc#modify_font (GPango.font_description_from_string "Serif 20");
