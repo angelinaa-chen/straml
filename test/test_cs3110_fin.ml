@@ -58,30 +58,30 @@ let test_alr_guessed _ =
   (* Initial guessed words set *)
   let guessed_words = BatSet.of_list [ "matthew"; "amy"; "angie" ] in
 
-  (* Test case 1: Guess is new, should be added *)
+  (* Guess is new, should be added *)
   let new_guess = "date" in
   let result = alr_guessed new_guess guessed_words in
   assert_equal (BatSet.of_list [ "matthew"; "amy"; "angie"; "date" ]) result;
 
-  (* Test case 2: Guess is already in the set, should remain unchanged *)
+  (* Guess is already in the set, should remain unchanged *)
   let existing_guess = "amy" in
   let result = alr_guessed existing_guess guessed_words in
   assert_equal (BatSet.of_list [ "matthew"; "amy"; "angie" ]) result
 
 let test_get_letter _ =
-  (* Test case 3: Highlight with mode 2 (blue) *)
+  (* Highlight with mode 2 (blue) *)
   let result = get_letter 'c' true 2 in
   assert_equal "<span foreground=\"blue\">c </span>" result;
 
-  (* Test case 4: Highlight with mode 3 (red) *)
+  (* Highlight with mode 3 (red) *)
   let result = get_letter 'd' true 3 in
   assert_equal "<span foreground=\"red\">d </span>" result;
 
-  (* Test case 5: Highlight with invalid mode (should not highlight) *)
+  (* Highlight with invalid mode (should not highlight) *)
   let result = get_letter 'e' true 4 in
   assert_equal "e " result;
 
-  (* Test case 6: No highlight (highlight = false) *)
+  (* No highlight (highlight = false) *)
   let result = get_letter 'f' false 0 in
   assert_equal "f " result
 
@@ -114,23 +114,21 @@ let test_print_letter_yellow _ =
 
 (* Test case for print_letter_green *)
 let test_print_letter_green _ =
-  (* When highlight = true, it should print in green (escape sequence) *)
+  (* Should print in green (escape sequence) *)
   let result = capture_output (fun () -> print_letter_green 'b' true) in
   assert_equal [ "\027[1;32mb\027[0m " ] result;
 
-  (* When highlight = false, it should print normally without escape
-     sequences *)
+  (* Print normally without escape sequences *)
   let result = capture_output (fun () -> print_letter_green 'b' false) in
   assert_equal [ "b " ] result
 
 (* Test case for print_letter_blue *)
 let test_print_letter_blue _ =
-  (* When highlight = true, it should print in blue (escape sequence) *)
+  (*Print in blue (escape sequence) *)
   let result = capture_output (fun () -> print_letter_blue 'c' true) in
   assert_equal [ "\027[1;34mc\027[0m " ] result;
 
-  (* When highlight = false, it should print normally without escape
-     sequences *)
+  (* Print normally without escape sequences *)
   let result = capture_output (fun () -> print_letter_blue 'c' false) in
   assert_equal [ "c " ] result
 
