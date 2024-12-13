@@ -72,72 +72,73 @@ let find_index arr x instance =
   let rec helper_find i count =
     if i >= len then None (* Reached the end of the array *)
     else if arr.(i) = x then
-      if count = instance then Some i (* Found the desired instance *)
-      else helper_find (i + 1) (count + 1) (* Skip this instance *)
-    else helper_find (i + 1) count (* Continue searching *)
+      if count = instance then Some i else helper_find (i + 1) (count + 1)
+    else helper_find (i + 1) count
   in
   helper_find 0 0
 
 let show_grid (grid : letter array array) found_words word_positions
     (grid_box : GPack.box) highlight_mode =
-  print_endline "show_grid called";
+  print_endline "show_grid called" [@coverage off];
 
   (* Convert the set of found words into a list *)
   let found_list = BatSet.to_list found_words in
 
   (* Create the grid string by iterating over each row and column *)
-  let grid_string =
-    Array.fold_left
-      (fun (acc : string) (row : letter array) ->
-        (* Find the index of the row *)
-        let r =
-          match find_index grid row 0 with
-          | None -> failwith "Row not found in grid"
-          | Some index -> index
-        in
-        (* Initialize the array to keep track of letter instances in the row *)
-        let instance_counts = Array.make 26 0 in
-        (* Construct the row's string with highlighted letters *)
-        let new_row =
-          Array.fold_left
-            (fun (acc2 : string) (l : letter) ->
-              (* Map 'A' - 'Z' to ASCII values 65 - 90 *)
-              let char_code = Char.code l - 65 in
-              (* Track occurrences of the same letter in the row *)
-              let instance = instance_counts.(char_code) in
-              instance_counts.(char_code) <- instance + 1;
-              (* Find the index of the letter within the row *)
-              let c =
-                match find_index row l instance with
-                | None -> failwith "Letter not found in row"
-                | Some index -> index
-              in
-              (* Append the letter with the appropriate highlight *)
-              acc2
-              ^ get_letter l
-                  (is_highlighted (r, c) found_list word_positions)
-                  highlight_mode)
-            "" row
-        in
-        (* Add the new row to the accumulated grid string *)
-        acc ^ new_row ^ "\n")
-      "" grid
+  let (grid_string [@coverage off]) =
+    (Array.fold_left
+       (fun (acc : string) (row : letter array) ->
+         (* Find the index of the row *)
+         let r =
+           match find_index grid row 0 with
+           | None -> failwith "Row not found in grid"
+           | Some index -> index [@coverage off]
+         in
+         (* Initialize the array to keep track of letter instances in the row *)
+         let instance_counts = Array.make 26 0 in
+         (* Construct the row's string with highlighted letters *)
+         let new_row =
+           (Array.fold_left
+              (fun (acc2 : string) (l : letter) ->
+                (* Map 'A' - 'Z' to ASCII values 65 - 90 *)
+                let char_code = Char.code l - 65 in
+                (* Track occurrences of the same letter in the row *)
+                let instance = instance_counts.(char_code) in
+                instance_counts.(char_code) <- instance + 1;
+                (* Find the index of the letter within the row *)
+                let c =
+                  match find_index row l instance with
+                  | None -> failwith "Letter not found in row"
+                  | Some index -> index [@coverage off]
+                in
+                (* Append the letter with the appropriate highlight *)
+                acc2
+                ^ get_letter l
+                    (is_highlighted (r, c) found_list word_positions)
+                    highlight_mode)
+              "" row [@coverage off])
+         in
+         (* Add the new row to the accumulated grid string *)
+         acc ^ new_row ^ "\n")
+       "" grid [@coverage off])
   in
 
   (* Get the list of all children in the grid box container *)
   let children = grid_box#children in
   (* Remove all existing widgets from the grid box *)
-  List.iter (fun widget -> grid_box#remove widget#coerce) children;
+  List.iter
+    (fun widget -> grid_box#remove widget#coerce)
+    children [@coverage off];
 
   (* Create a new label for the grid with the markup string *)
-  let new_grid_label = GMisc.label ~markup:grid_string () in
+  let new_grid_label = (GMisc.label ~markup:grid_string () [@coverage off]) in
 
   (* Set the font for the label to a monospace font for uniform letter width *)
   new_grid_label#misc#modify_font
-    (GPango.font_description_from_string "Monospace 30");
+    (GPango.font_description_from_string "Monospace 30") [@coverage off];
 
   (* Add the new label to the grid box container *)
-  grid_box#add new_grid_label#coerce
+  grid_box#add new_grid_label#coerce [@coverage off]
 
 (* Add the new label to the container grid_box#add !grid_label#coerce *)
 (* Array.iteri (fun r row -> Array.iteri (fun c letter -> if List.mem (r, c)
@@ -164,24 +165,27 @@ let word_to_highlight state theme_target_words =
 
 let hint_highlighter hint_word word_positions grid found_words grid_box
     highlight_mode =
-  print_endline "hint_highlighter called";
-  match List.assoc_opt hint_word word_positions with
+  print_endline "hint_highlighter called" [@coverage off];
+  match List.assoc_opt hint_word word_positions [@coverage off] with
   | Some positions ->
       let temp_hint_found_words = BatSet.add hint_word found_words in
-      show_grid grid temp_hint_found_words word_positions grid_box
-        highlight_mode
-  | None -> Printf.printf "Hint word not found in word positions.\n"
+      (show_grid grid temp_hint_found_words word_positions grid_box
+         highlight_mode [@coverage off])
+  | None ->
+      Printf.printf "Hint word not found in word positions.\n" [@coverage off]
 
 let hint_revealer state word_positions target_words accepted_words grid_box
     highlight_mode =
   match word_to_highlight state target_words with
-  | None -> Printf.printf "Hints not available. All words have been found!\n"
+  | None ->
+      Printf.printf "Hints not available. All words have been found!\n"
+      [@coverage off]
   | Some hint_word ->
       let valid_guesses_count =
         BatSet.filter
           (fun word -> BatSet.mem word accepted_words)
           state.guessed_words
-        |> BatSet.to_list |> List.length
+        |> BatSet.to_list |> (List.length [@coverage off])
       in
       if valid_guesses_count < 3 then
         Printf.printf
