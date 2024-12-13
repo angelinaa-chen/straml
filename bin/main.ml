@@ -3,9 +3,78 @@ open GPango
 open Gtk
 open Printf
 open Cs3110_fin.Logic
+open Cs3110_fin.Terminal_logic
 open Unix
 open Gdk
 open Cs3110_fin.Filter_csv
+
+let hint_counter = ref 0
+let match_counter = ref 0
+let max_hints = 7
+let guessed_words = BatSet.empty
+
+(* CLI Functions *)
+let terminal_stats_summary state match_counter hint_counter start_time =
+  let end_time = Unix.gettimeofday () in
+  let elapsed_time = end_time -. start_time in
+  Printf.printf "\n--- Game Summary ---\n";
+  Printf.printf "Words Found: %d\n" (BatSet.cardinal state.found_words);
+  Printf.printf "Total Guesses: %d\n" (BatSet.cardinal state.guessed_words);
+  Printf.printf "Hints Used: %d\n" !hint_counter;
+  Printf.printf "Time Spent: %.2f seconds\n" elapsed_time;
+  Printf.printf "Thanks for playing! :) \n"
+
+let rec terminal_game_loop state match_counter hint_counter max_hints
+    accepted_words target_words word_positions start_time =
+  Printf.printf "\n--- Current Grid ---\n";
+  print_grid state.grid state.found_words word_positions;
+  Printf.printf "Guess a word (or type 'q' to quit, 'hint' for a hint): ";
+  let guess = String.trim (read_line ()) in
+  match String.lowercase_ascii guess with
+  | "q" ->
+      terminal_stats_summary state match_counter hint_counter start_time;
+      exit 0
+  | "hint" ->
+      Printf.printf "Processing hint request...\n";
+      hint_revealer state word_positions target_words accepted_words;
+      terminal_game_loop state match_counter hint_counter max_hints
+        accepted_words target_words word_positions start_time
+  | _ ->
+      let new_state =
+        process_input state guess target_words match_counter hint_counter
+          max_hints accepted_words word_positions
+      in
+      if BatSet.cardinal new_state.found_words = List.length target_words then (
+        Printf.printf "\nCongrats! You found all the words! :)\n";
+        terminal_stats_summary new_state match_counter hint_counter start_time;
+        exit 0)
+      else
+        terminal_game_loop new_state match_counter hint_counter max_hints
+          accepted_words target_words word_positions start_time
+
+let select_theme () =
+  print_endline
+    "Choose a theme to play by typing the associated number with it below. To \
+     exit out of the game at any time, simply type 'q'.";
+  print_endline "1. Fall Fun";
+  print_endline "2. Well-Suited";
+  print_endline "3. To Your Health";
+  print_endline "4. Extremely Online";
+  print_endline "5. Beatlemania!";
+  try
+    let theme_choice = read_int () in
+    match theme_choice with
+    | 1 -> ("data/fall_fun", "Fall Fun")
+    | 2 -> ("data/nice_fit", "Well-Suited")
+    | 3 -> ("data/health", "To Your Health")
+    | 4 -> ("data/online", "Extremely Online")
+    | 5 -> ("data/beatle", "Beatlemania!")
+    | _ ->
+        Printf.printf "Invalid choice. Defaulting to Fall Fun.\n";
+        ("data/fall_fun", "Fall Fun")
+  with Failure _ ->
+    Printf.printf "Invalid input. Defaulting to Fall Fun.\n";
+    ("data/fall_fun", "Fall Fun")
 
 (*load accepted words*)
 let () = Cs3110_fin.Filter_csv.process_csv
@@ -606,6 +675,24 @@ let () =
     (instruction_button#connect#clicked ~callback:(fun () ->
          make_instruction_window instruction_button));
   fixed_container#put ~x:120 ~y:0 instruction_button#coerce;
+
+  let terminal_button =
+    GButton.button ~label:"Play in Terminal" ~packing:hbox#add ()
+  in
+  ignore
+    (terminal_button#connect#clicked ~callback:(fun () ->
+         let data_path, theme = select_theme () in
+         let grid = load_grid (data_path ^ "/grid.csv") in
+         let target_words = load_target_words (data_path ^ "/target.csv") in
+         let word_positions =
+           construct_word_positions target_words
+             (load_positions (data_path ^ "/positions.csv"))
+         in
+         let state = initialize_game grid theme in
+         let start_time = Unix.gettimeofday () in
+         terminal_game_loop state match_counter hint_counter max_hints
+           (load_words "data/filtered_accepted_words.csv")
+           target_words word_positions start_time));
 
   (* Show all widgets *)
   start_window#show ();
