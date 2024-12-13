@@ -1,4 +1,7 @@
-type grid = char array array
+type letter = char
+(** type of the*)
+
+type grid = letter array array
 (** type of the grid puzzle *)
 
 type game_state = {
@@ -67,13 +70,27 @@ val process_input :
 (** handles one turn of the game given the current [state] and a guess [word].
     performs appropriate processing and returns an updated game_state*)
 
-type letter = char
-
 val handle_guess : game_state -> string -> string list -> game_state
+(** updates the state if a target word is found *)
+
 val is_word_in_grid : letter array array -> string -> bool
+(** returns whether or not the letters in this word are adjacent in the grid
+    (can be reached in one line)*)
+
 val get_letter : letter -> bool -> int -> string
+(**[get_letter] returns the given letter formatted with the correct color*)
+
 val print_letter_yellow : letter -> bool -> unit
+(** prints a given letter in yellow if it satisfies the given predicate*)
+
 val print_letter_blue : letter -> bool -> unit
+(** prints a given letter in blue if it satisfies the given predicate*)
+
 val print_letter_green : letter -> bool -> unit
+(** prints a given letter in green if it satisfies the given predicate*)
+
 val find_index : 'a array -> 'a -> int -> int option
+(**[find_index] is the index of each unique [instance] of [x] in [arr]*)
+
 val is_spangram : 'a -> 'a -> bool
+(**returns whether or not the a word is the spangram*)
