@@ -56,17 +56,17 @@ let test_is_word_in_grid _ =
 
 let test_alr_guessed _ =
   (* Initial guessed words set *)
-  let guessed_words = BatSet.of_list [ "apple"; "banana"; "cherry" ] in
+  let guessed_words = BatSet.of_list [ "matthew"; "amy"; "angie" ] in
 
   (* Test case 1: Guess is new, should be added *)
   let new_guess = "date" in
   let result = alr_guessed new_guess guessed_words in
-  assert_equal (BatSet.of_list [ "apple"; "banana"; "cherry"; "date" ]) result;
+  assert_equal (BatSet.of_list [ "matthew"; "amy"; "angie"; "date" ]) result;
 
   (* Test case 2: Guess is already in the set, should remain unchanged *)
-  let existing_guess = "banana" in
+  let existing_guess = "amy" in
   let result = alr_guessed existing_guess guessed_words in
-  assert_equal (BatSet.of_list [ "apple"; "banana"; "cherry" ]) result
+  assert_equal (BatSet.of_list [ "matthew"; "amy"; "angie" ]) result
 
 let test_get_letter _ =
   (* Test case 3: Highlight with mode 2 (blue) *)
@@ -104,15 +104,11 @@ let capture_output f =
   with End_of_file ->
     close_in ic;
     List.rev !lines
-(* Test case for print_letter_yellow *)
 
 let test_print_letter_yellow _ =
-  (* When highlight = true, it should print in yellow (escape sequence) *)
   let result = capture_output (fun () -> print_letter_yellow 'a' true) in
   assert_equal [ "\027[1;33ma\027[0m " ] result;
 
-  (* When highlight = false, it should print normally without escape
-     sequences *)
   let result = capture_output (fun () -> print_letter_yellow 'a' false) in
   assert_equal [ "a " ] result
 
@@ -139,53 +135,51 @@ let test_print_letter_blue _ =
   assert_equal [ "c " ] result
 
 let test_find_index _ =
-  (* Test 2: Element is found but the desired instance is not present *)
   let arr = [| 1; 2; 3; 2; 4 |] in
   let result = find_index arr 2 3 in
   assert_equal None result;
 
-  (* Test 3: Element is not present in the array *)
+  (* Element is not present in the array *)
   let arr = [| 1; 2; 3; 4 |] in
   let result = find_index arr 5 1 in
   assert_equal None result;
 
-  (* Test 5: Empty array, element is not found *)
+  (* Empty array, element is not found *)
   let arr = [||] in
   let result = find_index arr 1 1 in
   assert_equal None result;
 
-  (* Test 7: Element occurs only once, and asking for the second instance should
-     return None *)
+  (* Element occurs only once, and asking for the second instance should return
+     None *)
   let arr = [| 10 |] in
   let result = find_index arr 10 2 in
   assert_equal None result
 
 let test_load_words _ =
-  (* Test 1: Load words from a valid file *)
-  let content = "apple\nbanana\norange\n" in
+  (* Load words from a valid file *)
+  let content = "matthew\namy\nfalak\n" in
   let filename = Filename.temp_file "test" ".txt" in
   let oc = open_out filename in
   output_string oc content;
   close_out oc;
 
   let result = load_words filename in
-  let expected = BatSet.of_list [ "apple"; "banana"; "orange" ] in
+  let expected = BatSet.of_list [ "matthew"; "amy"; "falak" ] in
 
   assert_equal result expected;
 
-  (* Test 2: Load words with duplicates from file (duplicates should be
-     ignored) *)
-  let content = "apple\nbanana\napple\norange\nbanana\n" in
+  (* Load words with duplicates from file (duplicates should be ignored) *)
+  let content = "matthew\namy\nmatthew\nfalak\namy\n" in
   let filename = Filename.temp_file "test" ".txt" in
   let oc = open_out filename in
   output_string oc content;
   close_out oc;
 
   let result = load_words filename in
-  let expected = BatSet.of_list [ "apple"; "banana"; "orange" ] in
+  let expected = BatSet.of_list [ "matthew"; "amy"; "falak" ] in
   assert_equal result expected;
 
-  (* Test 3: Load an empty file (should return an empty set) *)
+  (* Load an empty file (should return an empty set) *)
   let content = "" in
   let filename = Filename.temp_file "test" ".txt" in
   let oc = open_out filename in
@@ -196,20 +190,19 @@ let test_load_words _ =
   let expected = BatSet.empty in
   assert_equal result expected;
 
-  (* Test 4: Load a file with mixed case words (should convert to lowercase) *)
-  let content = "Apple\nBanana\nOrange\n" in
+  (* Load a file with mixed case words (should convert to lowercase) *)
+  let content = "Matthew\nAmy\nFalak\n" in
   let filename = Filename.temp_file "test" ".txt" in
   let oc = open_out filename in
   output_string oc content;
   close_out oc;
 
   let result = load_words filename in
-  let expected = BatSet.of_list [ "apple"; "banana"; "orange" ] in
+  let expected = BatSet.of_list [ "matthew"; "amy"; "falak" ] in
   assert_equal result expected
 
 let test_word_to_highlight _ =
-  (* Test case 1: No words found yet, should return the first word from target
-     words *)
+  (* No words found yet, should return the first word from target words *)
   let state =
     {
       grid = [| [| 'a'; 'b'; 'c' |]; [| 'd'; 'e'; 'f' |]; [| 'g'; 'h'; 'i' |] |];
@@ -304,35 +297,32 @@ let test_hint_revealer _ =
 
   (* use an int for highlight_mode *)
 
-  (* Mock game state *)
+  (* game state *)
   let state =
     {
       grid;
       found_words = BatSet.empty;
       (* no words found yet *)
-      guessed_words = BatSet.of_list [ "apple"; "banana" ];
+      guessed_words = BatSet.of_list [ "matthew"; "amy" ];
       (* guessed words *)
-      theme = "fruits";
+      theme = "names";
     }
   in
 
-  (* Mock word positions and accepted words *)
+  (* Word positions and accepted words *)
   let word_positions =
-    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+    [ ("matthew", [ (0, 0); (0, 1) ]); ("amy", [ (1, 0); (1, 1) ]) ]
   in
-  let target_words = [ "apple"; "banana" ] in
-  let accepted_words = BatSet.of_list [ "apple"; "banana"; "cherry" ] in
+  let target_words = [ "matthew"; "amy" ] in
+  let accepted_words = BatSet.of_list [ "matthew"; "amy"; "angie" ] in
 
   (* convert list to BatSet *)
 
-  (* Simple test: less than 3 valid guesses, hint not unlocked *)
+  (* Less than 3 valid guesses, hint not unlocked *)
   let _ =
     hint_revealer state word_positions target_words accepted_words grid_box
       highlight_mode
   in
-
-  (* We expect the message: "Sorry, hint not unlocked yet. Words left to unlock
-     hint: 1" *)
 
   (* Run GTK main loop *)
   ()
@@ -343,21 +333,21 @@ let test_process_input_word_already_guessed _ =
       grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
       (* Sample grid *)
       found_words = BatSet.empty;
-      guessed_words = BatSet.of_list [ "apple" ];
-      (* Already guessed "apple" *)
-      theme = "fruits";
+      guessed_words = BatSet.of_list [ "matthew" ];
+      (* Already guessed "matthew" *)
+      theme = "names";
     }
   in
   let match_counter = ref 0 in
   let hint_counter = ref 0 in
   let max_hints = 3 in
-  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let accepted_words = BatSet.of_list [ "matthew"; "amy" ] in
   let word_positions =
-    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+    [ ("matthew", [ (0, 0); (0, 1) ]); ("amy", [ (1, 0); (1, 1) ]) ]
   in
 
   let result =
-    process_input initial_state "apple" [ "apple"; "banana" ] match_counter
+    process_input initial_state "matthew" [ "matthew"; "amy" ] match_counter
       hint_counter max_hints accepted_words word_positions
   in
   assert_equal initial_state result
@@ -369,66 +359,64 @@ let test_process_input_word_found_in_target _ =
       found_words = BatSet.empty;
       guessed_words = BatSet.empty;
       (* No words guessed yet *)
-      theme = "fruits";
+      theme = "names";
     }
   in
   let match_counter = ref 0 in
   let hint_counter = ref 0 in
   let max_hints = 3 in
-  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let accepted_words = BatSet.of_list [ "matthew"; "amy" ] in
   let word_positions =
-    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+    [ ("matthew", [ (0, 0); (0, 1) ]); ("amy", [ (1, 0); (1, 1) ]) ]
   in
 
   let result =
-    process_input initial_state "apple" [ "apple"; "banana" ] match_counter
+    process_input initial_state "matthew" [ "matthew"; "amy" ] match_counter
       hint_counter max_hints accepted_words word_positions
   in
-  (* We expect the word to be added to found_words, and the match_counter to
-     increment *)
+  (* Word to be added to found_words, and the match_counter to increment *)
   let expected_state =
     {
       grid = initial_state.grid;
-      found_words = BatSet.add "apple" initial_state.found_words;
-      guessed_words = BatSet.add "apple" initial_state.guessed_words;
+      found_words = BatSet.add "matthew" initial_state.found_words;
+      guessed_words = BatSet.add "matthew" initial_state.guessed_words;
       theme = initial_state.theme;
     }
   in
   assert_equal expected_state result
 
-(* We expect the message: "Match found! Total matches: 1" *)
 let test_process_input_valid_word_not_in_target _ =
   let initial_state =
     {
       grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
       found_words = BatSet.empty;
       guessed_words = BatSet.empty;
-      theme = "fruits";
+      theme = "names";
     }
   in
   let match_counter = ref 0 in
   let hint_counter = ref 0 in
   let max_hints = 3 in
-  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let accepted_words = BatSet.of_list [ "matthew"; "amy" ] in
   let word_positions =
-    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+    [ ("matthew", [ (0, 0); (0, 1) ]); ("amy", [ (1, 0); (1, 1) ]) ]
   in
 
   let result =
-    process_input initial_state "grape" [ "apple"; "banana" ] match_counter
+    process_input initial_state "bojak" [ "matthew"; "amy" ] match_counter
       hint_counter max_hints accepted_words word_positions
   in
-  (* We expect the word "grape" to be counted towards hint_counter *)
+  (* "bojak" to be counted towards hint_counter *)
   let expected_state =
     {
       grid = initial_state.grid;
       found_words = initial_state.found_words;
-      guessed_words = BatSet.add "grape" initial_state.guessed_words;
+      guessed_words = BatSet.add "bojak" initial_state.guessed_words;
       theme = initial_state.theme;
     }
   in
   assert_equal expected_state result
-(* We expect the message: "Word count towards hint incremented. Total words
+(* Expect the message: "Word count towards hint incremented. Total words
    guessed: 1" *)
 
 let test_process_input_invalid_word _ =
@@ -437,27 +425,27 @@ let test_process_input_invalid_word _ =
       grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
       found_words = BatSet.empty;
       guessed_words = BatSet.empty;
-      theme = "fruits";
+      theme = "names";
     }
   in
   let match_counter = ref 0 in
   let hint_counter = ref 0 in
   let max_hints = 3 in
-  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let accepted_words = BatSet.of_list [ "matthew"; "amy" ] in
   let word_positions =
-    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+    [ ("matthew", [ (0, 0); (0, 1) ]); ("amy", [ (1, 0); (1, 1) ]) ]
   in
 
   let result =
-    process_input initial_state "pear" [ "apple"; "banana" ] match_counter
+    process_input initial_state "batman" [ "matthew"; "amy" ] match_counter
       hint_counter max_hints accepted_words word_positions
   in
-  (* We expect the word "pear" to be rejected as invalid *)
+  (* "batman" rejected as invalid *)
   let expected_state =
     {
       grid = initial_state.grid;
       found_words = initial_state.found_words;
-      guessed_words = BatSet.add "pear" initial_state.guessed_words;
+      guessed_words = BatSet.add "batman" initial_state.guessed_words;
       theme = initial_state.theme;
     }
   in
@@ -469,62 +457,53 @@ let test_process_input_no_match _ =
       grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
       found_words = BatSet.empty;
       guessed_words = BatSet.empty;
-      theme = "fruits";
+      theme = "names";
     }
   in
   let match_counter = ref 0 in
   let hint_counter = ref 0 in
   let max_hints = 3 in
-  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let accepted_words = BatSet.of_list [ "matthew"; "amy" ] in
   let word_positions =
-    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+    [ ("matthew", [ (0, 0); (0, 1) ]); ("amy", [ (1, 0); (1, 1) ]) ]
   in
 
   let result =
-    process_input initial_state "orange" [ "apple"; "banana" ] match_counter
+    process_input initial_state "falak" [ "matthew"; "amy" ] match_counter
       hint_counter max_hints accepted_words word_positions
   in
-  (* We expect the word "orange" to be added to guessed_words without any
-     changes to found_words or hint_counter *)
+  (* "falak" to be added to guessed_words without any changes to found_words or
+     hint_counter *)
   let expected_state =
     {
       grid = initial_state.grid;
       found_words = initial_state.found_words;
-      guessed_words = BatSet.add "orange" initial_state.guessed_words;
+      guessed_words = BatSet.add "falak" initial_state.guessed_words;
       theme = initial_state.theme;
     }
   in
   assert_equal expected_state result
 
-(* We expect the message: "Invalid word: orange" *)
+(* "Invalid word: falak" *)
 let test_is_spangram _ =
-  (* Test Case 1: The word matches the spangram *)
-  let result = is_spangram "apple" "apple" in
+  (*The word matches the spangram *)
+  let result = is_spangram "matthew" "matthew" in
   assert_equal true result;
 
-  (* Expected: true *)
-
-  (* Test Case 2: The word does not match the spangram *)
-  let result = is_spangram "apple" "banana" in
+  (* The word does not match the spangram *)
+  let result = is_spangram "matthew" "amy" in
   assert_equal false result;
-
-  (* Expected: false *)
 
   (* Test Case 3: The word is different, but spangram is empty *)
-  let result = is_spangram "apple" "" in
+  let result = is_spangram "matthew" "" in
   assert_equal false result;
 
-  (* Expected: false *)
-
-  (* Test Case 4: The word is the same, but spangram is empty *)
+  (* The word is the same, but spangram is empty *)
   let result = is_spangram "" "" in
   assert_equal true result;
 
-  (* Expected: true *)
-
-  (* Test Case 5: Case-sensitive comparison (word is "Apple", spangram is
-     "apple") *)
-  let result = is_spangram "Apple" "apple" in
+  (* Case-sensitive comparison (word is "Matthew", spangram is "matthew") *)
+  let result = is_spangram "Matthew" "matthew" in
   assert_equal false result (* Expected: false *)
 
 let suite =
