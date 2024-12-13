@@ -12,8 +12,9 @@ type game_state = {
 (** [found_words] is the BatSet of target words that have been found.
     [guessed_words] is the BatSet of all words that have been guessed. [theme]
     is the puzzle that the user chose to play*)
-
-let initialize_game grid theme =
+    let hints_used_terminal = ref 0
+    
+    let initialize_game grid theme =
   { grid; found_words = BatSet.empty; guessed_words = BatSet.empty; theme }
 
 (* Load words from a file into a BatSet *)
@@ -26,12 +27,13 @@ let load_words path =
          BatSet.empty
   with Sys_error msg -> failwith ("Failed to load words from file: " ^ msg)
 
+  (* Add the word to the set if it hasn't been guessed yet *)
 let alr_guessed guess guessed_words =
   if BatSet.mem guess guessed_words then guessed_words
   else BatSet.add guess guessed_words
-(* Add the word to the set if it hasn't been guessed yet *)
 
-(*stylizes a given letter*)
+
+(*stylizes and colors a given letter*)
 let print_letter_yellow letter highlight =
   if highlight then Printf.printf "\027[1;33m%c\027[0m " letter
   else Printf.printf "%c " letter
@@ -161,7 +163,7 @@ let process_input state word target_words match_counter hint_counter max_hints
   | "hint" ->
       Printf.printf "Processing hint request...\n";
       hint_revealer state word_positions target_words accepted_words;
-      state (* Return the same state after processing a hint *)
+      state
   | _ ->
       let guessed_words_updated = BatSet.add word state.guessed_words in
       if BatSet.mem word state.guessed_words then (
