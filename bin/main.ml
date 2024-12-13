@@ -286,58 +286,79 @@ let rec make_choose_window () =
 
   let make_game_window parent grid target_words word_positions theme =
     (* Create new window *)
-    let game_Window =
-      GWindow.window ~title:theme ~border_width:20 ~width:400 ~height:400 ()
-    in
+    let game_Window = GWindow.window ~title:theme ~border_width:20 () in
     window_count := !window_count + 1;
 
     (* Set up exit function when the window is closed *)
     ignore (game_Window#connect#destroy ~callback:destroy_window);
 
-    (* Use a fixed container to position the help button *)
-    let fixed_container = GPack.fixed ~packing:game_Window#add () in
+    (* Create vertical element box for central alignment *)
+    let vbox = GPack.vbox ~spacing:10 ~packing:game_Window#add () in
+    vbox#set_halign `CENTER;
+    vbox#set_valign `CENTER;
 
     (* Create a small question mark button *)
-    let help_button =
-      GButton.button ~label:"?" ~packing:(fixed_container#put ~x:180 ~y:10) ()
-    in
-    (* Add a callback to the button *)
+    let help_button = GButton.button ~label:"?" ~packing:vbox#pack () in
+    help_button#set_halign `END;
+    help_button#set_valign `START;
+
     ignore
       (help_button#connect#clicked ~callback:(fun () ->
            make_instruction_window help_button));
 
-    (* Create vertical element box with 10 px of padding *)
-    let vbox = GPack.vbox ~spacing:10 () in
-    fixed_container#put ~x:40 ~y:50 vbox#coerce;
-
-    (* Create game title with font 15*)
+    (* Create game title with font size 15 *)
     let title_label =
       GMisc.label ~use_underline:true ~text:theme ~packing:vbox#pack ()
     in
     title_label#misc#modify_font
-      (GPango.font_description_from_string "Serif 15");
+      (GPango.font_description_from_string "Serif Bold 20");
 
-    let grid_box = GPack.vbox ~border_width:0 ~packing:vbox#pack () in
-    (* Add a label to the new window *)
-    ignore (GMisc.label ~markup:"" ~packing:grid_box#pack ());
+    (* Create a box for the game grid *)
+    let grid_box = GPack.vbox ~packing:vbox#pack () in
 
-    (* Create a text entry box *)
-    let text_entry = GEdit.entry ~packing:vbox#add () in
+    let monospace_font = GPango.font_description_from_string "Monospace 20" in
+
+    let total_width = 420 and num_columns = 6 in
+    let spacing = (total_width - (num_columns * 70)) / (num_columns - 1) in
+
+    for i = 0 to Array.length grid - 1 do
+      let hbox = GPack.hbox ~spacing ~packing:grid_box#pack () in
+      hbox#set_halign `CENTER;
+
+      for j = 0 to Array.length grid.(i) - 1 do
+        let cell_frame =
+          GBin.frame ~width:70 ~height:70 ~shadow_type:`ETCHED_IN
+            ~packing:hbox#pack ()
+        in
+
+        let cell_label =
+          GMisc.label
+            ~text:(String.make 1 grid.(i).(j))
+            ~packing:cell_frame#add ()
+        in
+
+        cell_label#misc#modify_font monospace_font;
+
+        cell_label#set_xalign 0.5;
+        cell_label#set_yalign 0.5
+      done
+    done;
+
+    let text_entry = GEdit.entry ~packing:vbox#pack () in
 
     let hbox = GPack.hbox ~spacing:20 ~packing:vbox#pack () in
 
-    (* Create a button *)
-    let submit_button = GButton.button ~label:"Submit" ~packing:hbox#add () in
-    (* Create a button *)
-    let hint_button = GButton.button ~label:"Hint" ~packing:hbox#add () in
+    let submit_button = GButton.button ~label:"Submit" ~packing:hbox#pack () in
+    let hint_button = GButton.button ~label:"Hint" ~packing:hbox#pack () in
 
+    (* Initialize game state *)
     let accepted_words =
       Cs3110_fin.Logic.load_words "data/filtered_accepted_words.csv"
     in
     let state = ref (Cs3110_fin.Logic.initialize_game grid theme) in
     let start_time = Unix.gettimeofday () in
 
-    (* Connect submit_button to process input behavior*)
+    (* Connect submit_button to process input behavior *)
     ignore
       (submit_button#connect#clicked ~callback:(fun () ->
            let guess = text_entry#text in
@@ -368,14 +389,14 @@ let rec make_choose_window () =
                  game_Window#destroy ())
                else state := new_state));
 
-    (* Connect hint_button to directly ask for hint*)
+    (* Connect hint_button to directly ask for hint *)
     ignore
       (hint_button#connect#clicked ~callback:(fun () ->
            Printf.printf "Processing hint request...\n";
            Cs3110_fin.Logic.hint_revealer !state word_positions target_words
              accepted_words grid_box 2));
 
-    (* Show initial grid*)
+    (* Show initial grid *)
     Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions grid_box 1;
 
     game_Window#show ()
@@ -385,7 +406,8 @@ let rec make_choose_window () =
     FUNCTIONALITY--------------------------------------------------------------------*)
 
   (* Reset hint and match counters for a new game*)
-  (* hint_counter := 0; match_counter := 0; *)
+  hint_counter := 0;
+  match_counter := 0;
   let choose_window =
     GWindow.window ~title:"Choose Theme" ~border_width:20 ~width:400 ~height:400
       ()
@@ -492,8 +514,6 @@ let () =
   hbox#set_halign `CENTER;
   (* center horizontally in vbox *)
   hbox#set_valign `CENTER;
-
-  (* center vertically in vbox *)
 
   (* Create a fixed container inside the horizontal box *)
   let fixed_container = GPack.fixed ~packing:hbox#add () in
