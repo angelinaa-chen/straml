@@ -271,7 +271,7 @@ let make_instruction_window instruction_button =
 
   (* Instructions label *)
   let instructions_text =
-    "Welcome to Straml: The OCaml-based adaptation of the New York Times game \
+    "Welcome to Straml: The OCaml-based adaptation of the New York Times games \
      Strands! Similar to Wordle, Strands consists of grid of letters, a theme \
      and solution words.\n\
     \ The objective of the game is to find all of the hidden answers within \
@@ -318,8 +318,6 @@ let make_instruction_window instruction_button =
    again*)
 
 let rec make_choose_window () =
-  (*[stats_summary] displays a window with the user's end game stats after
-    finding all the words*)
   let stats_summary state match_counter guess_counter start_time =
     (* Create new window *)
     let stats_window =
@@ -331,16 +329,29 @@ let rec make_choose_window () =
     (* Connect destroy signal *)
     ignore (stats_window#connect#destroy ~callback:destroy_window);
 
-    (* Vertical box *)
-    let vbox = GPack.vbox ~border_width:20 ~packing:stats_window#add () in
+    (* Centered vertical box *)
+    let vbox = GPack.vbox ~spacing:10 ~packing:stats_window#add () in
+    vbox#set_halign `CENTER;
+    vbox#set_valign `CENTER;
 
     (* Title label *)
-    let title_label = GMisc.label ~text:"Game Summary" ~packing:vbox#pack () in
+    let title_label =
+      GMisc.label ~text:"Congrats, you found all the words!" ~packing:vbox#pack
+        ()
+    in
     ignore
       (title_label#misc#connect#realize ~callback:(fun () ->
            title_label#misc#modify_font
-             (GPango.font_description_from_string "Serif 15")));
+             (GPango.font_description_from_string "Serif 20")));
 
+    (* Add spacing between title and summary *)
+    ignore (GMisc.label ~text:"" ~height:20 ~packing:vbox#pack ());
+    let game_label = GMisc.label ~text:"Game Summary" ~packing:vbox#pack () in
+    ignore
+      (game_label#misc#connect#realize ~callback:(fun () ->
+           game_label#misc#modify_font
+             (GPango.font_description_from_string "Serif 25")));
+    ignore (GMisc.label ~height:10 ~packing:vbox#pack ());
     (* Summary label *)
     let end_time = Unix.gettimeofday () in
     let elapsed_time = end_time -. start_time in
@@ -349,21 +360,28 @@ let rec make_choose_window () =
       ^ Printf.sprintf "Total Guesses: %d\n" !guess_counter
       ^ Printf.sprintf "Hints Used: %d\n" !hints_used
       ^ Printf.sprintf "Time Spent: %.2f seconds\n\n" elapsed_time
-      ^ Printf.sprintf "Play again?\n"
     in
-    ignore (GMisc.label ~text:summary ~packing:vbox#pack ());
+    ignore
+      (let summary_label = GMisc.label ~text:summary ~packing:vbox#pack () in
+       summary_label#misc#modify_font
+         (GPango.font_description_from_string "Serif 17"));
 
     (* Buttons *)
-    let hbox = GPack.hbox ~spacing:20 ~packing:vbox#pack () in
+    let button_hbox = GPack.hbox ~spacing:20 ~packing:vbox#pack () in
+    button_hbox#set_halign `CENTER;
+    button_hbox#set_valign `CENTER;
+
     let restart_button =
-      GButton.button ~label:"Play Again" ~packing:hbox#pack ()
+      GButton.button ~label:"Play Again" ~packing:button_hbox#pack ()
     in
     ignore
       (restart_button#connect#clicked ~callback:(fun () ->
            make_choose_window ();
            stats_window#destroy ()));
 
-    let quit_button = GButton.button ~label:"Quit" ~packing:hbox#pack () in
+    let quit_button =
+      GButton.button ~label:"Quit" ~packing:button_hbox#pack ()
+    in
     ignore
       (quit_button#connect#clicked ~callback:(fun () -> stats_window#destroy ()));
 
