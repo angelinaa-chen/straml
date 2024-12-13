@@ -50,6 +50,7 @@ val hint_revealer :
   string BatSet.t ->
   GPack.box ->
   int ->
+  GMisc.label option ->
   unit
 
 val process_input :
@@ -61,6 +62,7 @@ val process_input :
   'a ->
   string BatSet.t ->
   'b ->
+  GMisc.label option ->
   game_state
 (** handles one turn of the game given the current [state] and a guess [word].
     performs appropriate processing and returns an updated game_state*)

@@ -18,7 +18,7 @@ let test_print_letter _ =
 
   let print_letter_to_buffer letter highlight =
     if highlight then Format.fprintf fmt "\027[1;32m%c\027[0m " letter
-    else Format.fprintf fmt "%c\n   " letter
+    else Format.fprintf fmt "%c\n " letter
   in
   print_letter_to_buffer 'a' true;
 
@@ -73,9 +73,9 @@ let test_get_letter _ =
   let result = get_letter 'c' true 2 in
   assert_equal "<span foreground=\"blue\">c </span>" result;
 
-  (* Highlight with mode 3 (red) *)
+  (* Highlight with mode 3 (yellow) *)
   let result = get_letter 'd' true 3 in
-  assert_equal "<span foreground=\"red\">d </span>" result;
+  assert_equal "<span foreground=\"yellow\">d </span>" result;
 
   (* Highlight with invalid mode (should not highlight) *)
   let result = get_letter 'e' true 4 in
@@ -230,7 +230,7 @@ let test_word_to_highlight _ =
       match result with
       | Some word when word = "dog" -> Printf.printf "Test 2 passed: %s\n" word
       | _ -> (
-          Printf.printf "Test 2 failed\n";
+          Printf.printf "Test 2\n   failed\n";
 
           (* Test case 3: All words found, should return None *)
           let state =
@@ -267,7 +267,7 @@ let test_word_to_highlight _ =
               let result = word_to_highlight state [] in
               match result with
               | None -> Printf.printf "Test 4 passed\n"
-              | Some _ -> Printf.printf "Test 4 failed\n")))
+              | Some _ -> Printf.printf "Test 4\n   failed\n")))
 
 (* Utility function to capture the output of a function that uses
    print_endline *)
@@ -300,10 +300,9 @@ let test_hint_revealer _ =
     {
       grid;
       found_words = BatSet.empty;
-      (* no words found yet *)
-      guessed_words = BatSet.of_list [ "matthew"; "amy" ];
-      (* guessed words *)
-      theme = "names";
+      (* no words found yet *) guessed_words =
+        BatSet.of_list [ "matthew"; "amy" ];
+      (* guessed words *) theme = "names";
     }
   in
 
@@ -319,21 +318,18 @@ let test_hint_revealer _ =
   (* Less than 3 valid guesses, hint not unlocked *)
   let _ =
     hint_revealer state word_positions target_words accepted_words grid_box
-      highlight_mode
+      highlight_mode None
   in
 
-  (* Run GTK main loop *)
-  ()
+  (* Run GTK main loop *) ()
 
 let test_process_input_word_already_guessed _ =
   let initial_state =
     {
       grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
-      (* Sample grid *)
-      found_words = BatSet.empty;
+      (* Sample grid *) found_words = BatSet.empty;
       guessed_words = BatSet.of_list [ "matthew" ];
-      (* Already guessed "matthew" *)
-      theme = "names";
+      (* Already guessed "matthew" *) theme = "names";
     }
   in
   let match_counter = ref 0 in
@@ -346,7 +342,7 @@ let test_process_input_word_already_guessed _ =
 
   let result =
     process_input initial_state "matthew" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   assert_equal initial_state result
 
@@ -356,8 +352,7 @@ let test_process_input_word_found_in_target _ =
       grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
       found_words = BatSet.empty;
       guessed_words = BatSet.empty;
-      (* No words guessed yet *)
-      theme = "names";
+      (* No words guessed yet *) theme = "names";
     }
   in
   let match_counter = ref 0 in
@@ -370,7 +365,7 @@ let test_process_input_word_found_in_target _ =
 
   let result =
     process_input initial_state "matthew" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   (* Word to be added to found_words, and the match_counter to increment *)
   let expected_state =
@@ -402,7 +397,7 @@ let test_process_input_valid_word_not_in_target _ =
 
   let result =
     process_input initial_state "bojak" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   (* "bojak" to be counted towards hint_counter *)
   let expected_state =
@@ -436,7 +431,7 @@ let test_process_input_invalid_word _ =
 
   let result =
     process_input initial_state "batman" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   (* "batman" rejected as invalid *)
   let expected_state =
@@ -468,7 +463,7 @@ let test_process_input_no_match _ =
 
   let result =
     process_input initial_state "falak" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   (* "falak" to be added to guessed_words without any changes to found_words or
      hint_counter *)

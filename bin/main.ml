@@ -165,16 +165,6 @@ let construct_word_positions target_words positions_list =
     (fun words positions -> (words, positions))
     target_words positions_list
 
-(* print functions for debugging*)
-(* let print_pair_list lst = List.iter (fun (a, b) -> Printf.printf "%s: [" a;
-   List.iter (fun (x, y) -> Printf.printf "(%d, %d) " x y) b; Printf.printf
-   "]\n") lst
-
-   let print_char_grid (grid : char array array) : unit = Array.iter (fun row ->
-   Array.iter (fun c -> Printf.printf "%c " c) row; print_newline ()) grid
-
-   let print_list list = List.iter (fun elt -> print_endline elt) list *)
-
 (*fall fun*)
 let fall_fun_grid = load_grid "data/fall_fun/grid.csv"
 let fall_fun_target = load_target_words "data/fall_fun/target.csv"
@@ -454,12 +444,13 @@ let rec make_choose_window () =
     in
 
     (* Initialize info box to display game information *)
-    let info_box = GPack.vbox ~packing:vbox#pack () in
+    let info_box = GPack.vbox ~spacing:10 ~packing:vbox#pack () in
     let game_info_label =
       GMisc.label
         ~text:"Hints used: 0 Guesses to hint: 3 Words guessed: 0 Words found: 0"
         ~packing:info_box#pack ()
     in
+    let message_label = GMisc.label ~text:"" ~packing:info_box#pack () in
 
     (* Text entry for answers *)
     let text_entry = GEdit.entry ~packing:vbox#pack () in
@@ -481,9 +472,8 @@ let rec make_choose_window () =
     let start_time = Unix.gettimeofday () in
 
     let hint_function () =
-      Printf.printf "Processing hint request...\n";
       Cs3110_fin.Logic.hint_revealer !state word_positions target_words
-        accepted_words grid_box 2;
+        accepted_words grid_box 2 (Some message_label);
       hints_used := !hints_used + 1;
       hint_button#set_sensitive false;
       game_info_label#set_text
@@ -512,13 +502,14 @@ let rec make_choose_window () =
                let new_state =
                  Cs3110_fin.Logic.process_input !state guess target_words
                    match_counter guess_counter max_hints accepted_words
-                   word_positions
+                   word_positions (Some message_label)
                in
                Cs3110_fin.Logic.show_grid new_state.grid new_state.found_words
                  word_positions grid_box 1;
 
-               if !guess_counter - !hints_used >= 3 then
-                 hint_button#set_sensitive true;
+               if !guess_counter > 0 && (!guess_counter - !hints_used) mod 3 = 0
+               then message_label#set_text "Hint Unlocked!";
+               hint_button#set_sensitive true;
 
                (* Update game_info label*)
                game_info_label#set_text
