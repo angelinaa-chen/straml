@@ -146,8 +146,9 @@ let beatle_positions =
 let () = ignore (GMain.init ())
 
 (* Initialize counters *)
-let hint_counter = ref 0
+let guess_counter = ref 0
 let match_counter = ref 0
+let hints_used = ref 0
 let max_hints = 7
 let guessed_words = BatSet.empty
 
@@ -232,7 +233,7 @@ let rec make_choose_window () =
 
   (*[stats_summary] displays a window with the user's end game stats after
     finding all the words*)
-  let stats_summary state match_counter hint_counter start_time =
+  let stats_summary state match_counter guess_counter start_time =
     (* Create new window *)
     let stats_window =
       GWindow.window ~title:"End Game Stats" ~border_width:20 ~width:400
@@ -257,10 +258,9 @@ let rec make_choose_window () =
     let end_time = Unix.gettimeofday () in
     let elapsed_time = end_time -. start_time in
     let summary =
-      Printf.sprintf "Words Found: %d\n" (BatSet.cardinal state.found_words)
-      ^ Printf.sprintf "Total Guesses: %d\n"
-          (BatSet.cardinal state.guessed_words)
-      ^ Printf.sprintf "Hints Used: %d\n" !hint_counter
+      Printf.sprintf "Words Found: %d\n" !match_counter
+      ^ Printf.sprintf "Total Guesses: %d\n" !guess_counter
+      ^ Printf.sprintf "Hints Used: %d\n" !hints_used
       ^ Printf.sprintf "Time Spent: %.2f seconds\n\n" elapsed_time
       ^ Printf.sprintf "Play again?\n"
     in
@@ -343,6 +343,23 @@ let rec make_choose_window () =
       done
     done;
 
+    (* Add more vertical space between the grid and the text entry *)
+    let vertical_space_after_grid = 20 in
+    (* Space after grid *)
+    let _spacer =
+      GPack.vbox ~spacing:vertical_space_after_grid ~packing:vbox#pack ()
+    in
+
+    (* Initialize info box to display game information *)
+    let info_box = GPack.vbox ~packing:vbox#pack () in
+    let game_info_label =
+      GMisc.label
+        ~text:"Hints used: 0 Guesses to hint: 3 Words guessed: 0 Words found: 0"
+        ~packing:info_box#pack ()
+    in
+
+    (* let message_label = GMisc.label ~text:"" ~packing:info_box#pack () in *)
+
     (* Text entry for answers *)
     let text_entry = GEdit.entry ~packing:vbox#pack () in
 
@@ -352,7 +369,9 @@ let rec make_choose_window () =
 
     (* Center the buttons horizontally *)
     let submit_button = GButton.button ~label:"Submit" ~packing:hbox#pack () in
+
     let hint_button = GButton.button ~label:"Hint" ~packing:hbox#pack () in
+    hint_button#set_sensitive false;
 
     (* Initialize game state *)
     let accepted_words =
@@ -361,43 +380,68 @@ let rec make_choose_window () =
     let state = ref (Cs3110_fin.Logic.initialize_game grid theme) in
     let start_time = Unix.gettimeofday () in
 
+    let hint_function () =
+      Printf.printf "Processing hint request...\n";
+      Cs3110_fin.Logic.hint_revealer !state word_positions target_words
+        accepted_words grid_box 2;
+      hints_used := !hints_used + 1;
+      hint_button#set_sensitive false;
+      game_info_label#set_text
+        (Printf.sprintf
+           "Hints used: %s Guesses to hint: %s Words guessed: %s Words found: \
+            %s"
+           (string_of_int !hints_used)
+           (string_of_int (3 - (!guess_counter mod 3)))
+           (string_of_int !guess_counter)
+           (string_of_int !match_counter))
+    in
+
     (* Connect submit_button to process input behavior *)
     ignore
       (submit_button#connect#clicked ~callback:(fun () ->
            let guess = text_entry#text in
            match String.lowercase_ascii guess with
            | "q" ->
-               stats_summary !state match_counter hint_counter start_time;
+               stats_summary !state match_counter guess_counter start_time;
                game_Window#destroy ()
            | "hint" ->
-               Printf.printf "Processing hint request...\n";
-               Cs3110_fin.Logic.hint_revealer !state word_positions target_words
-                 accepted_words grid_box 2;
+               hint_function ();
                game_Window#show ()
            | _ ->
                let new_state =
                  Cs3110_fin.Logic.process_input !state guess target_words
-                   match_counter hint_counter max_hints accepted_words
+                   match_counter guess_counter max_hints accepted_words
                    word_positions
                in
                Cs3110_fin.Logic.show_grid new_state.grid new_state.found_words
                  word_positions grid_box 1;
+
+               if !guess_counter - !hints_used >= 3 then
+                 hint_button#set_sensitive true;
+
+               (* Update game_info label*)
+               game_info_label#set_text
+                 (Printf.sprintf
+                    "Hints used: %s Guesses to hint: %s Words guessed: %s \
+                     Words found: %s"
+                    (string_of_int !hints_used)
+                    (string_of_int (3 - (!guess_counter mod 3)))
+                    (string_of_int !guess_counter)
+                    (string_of_int !match_counter));
+
                game_Window#show ();
+
                if
                  BatSet.cardinal new_state.found_words
                  = List.length target_words
                then (
                  Printf.printf "Congrats! You found all the words. :)\n";
-                 stats_summary new_state match_counter hint_counter start_time;
+                 stats_summary new_state match_counter guess_counter start_time;
                  game_Window#destroy ())
                else state := new_state));
 
     (* Connect hint_button to directly ask for hint *)
-    ignore
-      (hint_button#connect#clicked ~callback:(fun () ->
-           Printf.printf "Processing hint request...\n";
-           Cs3110_fin.Logic.hint_revealer !state word_positions target_words
-             accepted_words grid_box 2));
+    ignore (hint_button#connect#clicked ~callback:(fun () -> hint_function ()));
 
     (* Show initial grid *)
     Cs3110_fin.Logic.show_grid grid BatSet.empty word_positions grid_box 1;
@@ -409,7 +453,7 @@ let rec make_choose_window () =
     FUNCTIONALITY--------------------------------------------------------------------*)
 
   (* Reset hint and match counters for a new game*)
-  hint_counter := 0;
+  guess_counter := 0;
   match_counter := 0;
   let choose_window =
     GWindow.window ~title:"Choose Theme" ~border_width:20 ~width:400 ~height:400
