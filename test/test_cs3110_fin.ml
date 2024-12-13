@@ -12,13 +12,26 @@ let test_make_state _ =
   assert_equal state.guessed_words BatSet.empty;
   assert_equal state.theme theme
 
+let test_make_state2 _ =
+  let grid =
+    [| [| 'a'; 'b'; 'c' |]; [| 'd'; 'e'; 'f' |]; [| 'g'; 'h'; 'i' |] |]
+  in
+  let theme = "alphabet" in
+  let state = initialize_game grid theme in
+
+  assert_equal state.grid grid;
+  assert_equal state.found_words BatSet.empty;
+  assert_equal state.guessed_words BatSet.empty;
+  assert_equal state.theme theme
+
+(* test terminal printing with color*)
 let test_print_letter _ =
   let buffer = Buffer.create 16 in
   let fmt = Format.formatter_of_buffer buffer in
 
   let print_letter_to_buffer letter highlight =
     if highlight then Format.fprintf fmt "\027[1;32m%c\027[0m " letter
-    else Format.fprintf fmt "%c\n   " letter
+    else Format.fprintf fmt "%c\n " letter
   in
   print_letter_to_buffer 'a' true;
 
@@ -27,10 +40,15 @@ let test_print_letter _ =
   assert_equal output "\027[1;32ma\027[0m "
 
 let test_is_highlighted _ =
-  let word_positions = [ ("word", [ (0, 0); (1, 1) ]) ] in
+  let word_positions = [ ("word", [ (0, 0); (1, 1); (0, 1); (1, 2) ]) ] in
   let found_words = [ "word" ] in
   assert_equal (is_highlighted (0, 0) found_words word_positions) true;
-  assert_equal (is_highlighted (0, 1) found_words word_positions) false
+  assert_equal (is_highlighted (1, 1) found_words word_positions) true;
+  assert_equal (is_highlighted (0, 1) found_words word_positions) true;
+  assert_equal (is_highlighted (1, 2) found_words word_positions) true;
+  assert_equal (is_highlighted (1, 0) found_words word_positions) false;
+  assert_equal (is_highlighted (-1, -1) found_words word_positions) false;
+  assert_equal (is_highlighted (0, -1) found_words word_positions) false
 
 let test_handle_guess _ =
   let grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |] in
@@ -52,7 +70,13 @@ let test_is_word_in_grid _ =
     [| [| 'A'; 'B'; 'C' |]; [| 'D'; 'E'; 'F' |]; [| 'G'; 'H'; 'I' |] |]
   in
   assert_bool "Word should be found" (is_word_in_grid grid "ABC");
-  assert_bool "Word should not be found" (not (is_word_in_grid grid "XYZ"))
+  assert_bool "Word should be found" (is_word_in_grid grid "ADH");
+  assert_bool "Word should be found" (is_word_in_grid grid "IFC");
+  assert_bool "Word should be found" (is_word_in_grid grid "EGD");
+  assert_bool "Word should not be found" (not (is_word_in_grid grid "XYZ"));
+  assert_bool "Word should not be found" (not (is_word_in_grid grid "ACI"));
+  assert_bool "Word should not be found" (not (is_word_in_grid grid "BDF"));
+  assert_bool "Word should not be found" (not (is_word_in_grid grid "IHB"))
 
 let test_alr_guessed _ =
   (* Initial guessed words set *)
@@ -63,23 +87,48 @@ let test_alr_guessed _ =
   let result = alr_guessed new_guess guessed_words in
   assert_equal (BatSet.of_list [ "matthew"; "amy"; "angie"; "date" ]) result;
 
+  let new_guess2 = "" in
+  let result2 = alr_guessed new_guess2 result in
+  assert_equal
+    (BatSet.of_list [ "matthew"; "amy"; "angie"; "date"; "" ])
+    result2;
+
   (* Guess is already in the set, should remain unchanged *)
   let existing_guess = "amy" in
   let result = alr_guessed existing_guess guessed_words in
-  assert_equal (BatSet.of_list [ "matthew"; "amy"; "angie" ]) result
+  assert_equal (BatSet.of_list [ "matthew"; "amy"; "angie" ]) result;
+
+  let existing_guess2 = "" in
+  let result2 = alr_guessed existing_guess2 result2 in
+  assert_equal
+    (BatSet.of_list [ "matthew"; "amy"; "angie"; "date"; "" ])
+    result2
 
 let test_get_letter _ =
+  (* Highlight with mode 1 (green) *)
+  let result = get_letter 'a' true 1 in
+  assert_equal "<span foreground=\"green\">a </span>" result;
+
   (* Highlight with mode 2 (blue) *)
   let result = get_letter 'c' true 2 in
   assert_equal "<span foreground=\"blue\">c </span>" result;
 
-  (* Highlight with mode 3 (red) *)
+  (* Highlight with mode 3 (yellow) *)
   let result = get_letter 'd' true 3 in
-  assert_equal "<span foreground=\"red\">d </span>" result;
+  assert_equal "<span foreground=\"yellow\">d </span>" result;
 
   (* Highlight with invalid mode (should not highlight) *)
   let result = get_letter 'e' true 4 in
   assert_equal "e " result;
+
+  let result = get_letter 'k' true 4 in
+  assert_equal "k " result;
+
+  let result = get_letter 'z' true 4 in
+  assert_equal "z " result;
+
+  let result = get_letter ' ' true 4 in
+  assert_equal "  " result;
 
   (* No highlight (highlight = false) *)
   let result = get_letter 'f' false 0 in
@@ -109,6 +158,9 @@ let test_print_letter_yellow _ =
   let result = capture_output (fun () -> print_letter_yellow 'a' true) in
   assert_equal [ "\027[1;33ma\027[0m " ] result;
 
+  let result = capture_output (fun () -> print_letter_yellow ' ' true) in
+  assert_equal [ "\027[1;33m\027[0m " ] result;
+
   let result = capture_output (fun () -> print_letter_yellow 'a' false) in
   assert_equal [ "a " ] result
 
@@ -137,19 +189,41 @@ let test_find_index _ =
   let result = find_index arr 2 3 in
   assert_equal None result;
 
+  let arr = [| 1; 2; 3; 2; 4 |] in
+  let result = find_index arr 2 1 in
+  assert_equal (Some 3) result;
+
+  let arr = [| 1; 1; 1; 1; 1 |] in
+  let result = find_index arr 1 0 in
+  assert_equal (Some 0) result;
+  let result2 = find_index arr 1 4 in
+  assert_equal (Some 4) result2;
+  let result2 = find_index arr 6 2 in
+  assert_equal None result2;
+
   (* Element is not present in the array *)
   let arr = [| 1; 2; 3; 4 |] in
   let result = find_index arr 5 1 in
   assert_equal None result;
+  let result2 = find_index arr 0 1 in
+  assert_equal None result2;
+  let result3 = find_index arr 2 1 in
+  assert_equal None result3;
+  let result4 = find_index arr 1 3 in
+  assert_equal None result4;
 
   (* Empty array, element is not found *)
   let arr = [||] in
   let result = find_index arr 1 1 in
   assert_equal None result;
+  let result = find_index arr 0 0 in
+  assert_equal None result;
 
   (* Element occurs only once, and asking for the second instance should return
      None *)
   let arr = [| 10 |] in
+  let result = find_index arr 10 0 in
+  assert_equal (Some 0) result;
   let result = find_index arr 10 2 in
   assert_equal None result
 
@@ -166,6 +240,17 @@ let test_load_words _ =
 
   assert_equal result expected;
 
+  let content2 = "angie" in
+  let filename2 = Filename.temp_file "test2" ".txt" in
+  let oc2 = open_out filename2 in
+  output_string oc2 content2;
+  close_out oc2;
+
+  let result = load_words filename2 in
+  let expected = BatSet.of_list [ "angie" ] in
+
+  assert_equal result expected;
+
   (* Load words with duplicates from file (duplicates should be ignored) *)
   let content = "matthew\namy\nmatthew\nfalak\namy\n" in
   let filename = Filename.temp_file "test" ".txt" in
@@ -173,8 +258,13 @@ let test_load_words _ =
   output_string oc content;
   close_out oc;
 
+  let content = "angie\nangie\nangie\nangie\n" in
+  let filename = Filename.temp_file "test" ".txt" in
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc;
   let result = load_words filename in
-  let expected = BatSet.of_list [ "matthew"; "amy"; "falak" ] in
+  let expected = BatSet.of_list [ "angie" ] in
   assert_equal result expected;
 
   (* Load an empty file (should return an empty set) *)
@@ -197,6 +287,16 @@ let test_load_words _ =
 
   let result = load_words filename in
   let expected = BatSet.of_list [ "matthew"; "amy"; "falak" ] in
+  assert_equal result expected;
+
+  let content = "ANGIE\nANGELINA\nCHENGELINA\n" in
+  let filename = Filename.temp_file "test" ".txt" in
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc;
+
+  let result = load_words filename in
+  let expected = BatSet.of_list [ "angie"; "angelina"; "chengelina" ] in
   assert_equal result expected
 
 let test_word_to_highlight _ =
@@ -230,7 +330,7 @@ let test_word_to_highlight _ =
       match result with
       | Some word when word = "dog" -> Printf.printf "Test 2 passed: %s\n" word
       | _ -> (
-          Printf.printf "Test 2 failed\n";
+          Printf.printf "Test 2\n   failed\n";
 
           (* Test case 3: All words found, should return None *)
           let state =
@@ -267,7 +367,7 @@ let test_word_to_highlight _ =
               let result = word_to_highlight state [] in
               match result with
               | None -> Printf.printf "Test 4 passed\n"
-              | Some _ -> Printf.printf "Test 4 failed\n")))
+              | Some _ -> Printf.printf "Test 4\n   failed\n")))
 
 (* Utility function to capture the output of a function that uses
    print_endline *)
@@ -300,10 +400,9 @@ let test_hint_revealer _ =
     {
       grid;
       found_words = BatSet.empty;
-      (* no words found yet *)
-      guessed_words = BatSet.of_list [ "matthew"; "amy" ];
-      (* guessed words *)
-      theme = "names";
+      (* no words found yet *) guessed_words =
+        BatSet.of_list [ "matthew"; "amy" ];
+      (* guessed words *) theme = "names";
     }
   in
 
@@ -319,21 +418,18 @@ let test_hint_revealer _ =
   (* Less than 3 valid guesses, hint not unlocked *)
   let _ =
     hint_revealer state word_positions target_words accepted_words grid_box
-      highlight_mode
+      highlight_mode None
   in
 
-  (* Run GTK main loop *)
-  ()
+  (* Run GTK main loop *) ()
 
 let test_process_input_word_already_guessed _ =
   let initial_state =
     {
       grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
-      (* Sample grid *)
-      found_words = BatSet.empty;
+      (* Sample grid *) found_words = BatSet.empty;
       guessed_words = BatSet.of_list [ "matthew" ];
-      (* Already guessed "matthew" *)
-      theme = "names";
+      (* Already guessed "matthew" *) theme = "names";
     }
   in
   let match_counter = ref 0 in
@@ -346,7 +442,7 @@ let test_process_input_word_already_guessed _ =
 
   let result =
     process_input initial_state "matthew" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   assert_equal initial_state result
 
@@ -356,8 +452,7 @@ let test_process_input_word_found_in_target _ =
       grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
       found_words = BatSet.empty;
       guessed_words = BatSet.empty;
-      (* No words guessed yet *)
-      theme = "names";
+      (* No words guessed yet *) theme = "names";
     }
   in
   let match_counter = ref 0 in
@@ -370,7 +465,7 @@ let test_process_input_word_found_in_target _ =
 
   let result =
     process_input initial_state "matthew" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   (* Word to be added to found_words, and the match_counter to increment *)
   let expected_state =
@@ -402,7 +497,7 @@ let test_process_input_valid_word_not_in_target _ =
 
   let result =
     process_input initial_state "bojak" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   (* "bojak" to be counted towards hint_counter *)
   let expected_state =
@@ -436,7 +531,7 @@ let test_process_input_invalid_word _ =
 
   let result =
     process_input initial_state "batman" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   (* "batman" rejected as invalid *)
   let expected_state =
@@ -468,7 +563,7 @@ let test_process_input_no_match _ =
 
   let result =
     process_input initial_state "falak" [ "matthew"; "amy" ] match_counter
-      hint_counter max_hints accepted_words word_positions
+      hint_counter max_hints accepted_words word_positions None
   in
   (* "falak" to be added to guessed_words without any changes to found_words or
      hint_counter *)
@@ -508,6 +603,7 @@ let suite =
   "TestGame"
   >::: [
          "test_make_state" >:: test_make_state;
+         "test_make_state2" >:: test_make_state2;
          "test_print_letter" >:: test_print_letter;
          "test_is_highlighted" >:: test_is_highlighted;
          "test_handle_guess" >:: test_handle_guess;
