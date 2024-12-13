@@ -37,7 +37,7 @@ let alr_guessed guess guessed_words =
 
 (**[get_letter] returns a letter as plaint text or highlighted if [highlight] is
    true according to the [highlight mode] selection where 1 - green, 2 - blue,
-   and 3 - red*)
+   and 3 - yellow*)
 let get_letter letter highlight highlight_mode =
   if highlight = true then
     if highlight_mode = 1 then
@@ -45,7 +45,7 @@ let get_letter letter highlight highlight_mode =
     else if highlight_mode = 2 then
       Printf.sprintf "<span foreground=\"blue\">%c </span>" letter
     else if highlight_mode = 3 then
-      Printf.sprintf "<span foreground=\"red\">%c </span>" letter
+      Printf.sprintf "<span foreground=\"yellow\">%c </span>" letter
     else Printf.sprintf "%c " letter
   else Printf.sprintf "%c " letter
 
@@ -62,8 +62,9 @@ let print_letter_blue letter highlight =
   if highlight then Printf.printf "\027[1;34m%c\027[0m " letter
   else Printf.printf "%c " letter
 
-(*iterates over each position in a given grid, returns whether or not that
-  position needs to be highlighted based on if it's apart of a found word*)
+(** [is_highlighted] iterates over each position in a given grid, returns
+    whether or not that position needs to be highlighted based on if it's apart
+    of a found word*)
 let is_highlighted (r, c) found_words word_positions =
   List.exists
     (fun (word, positions) ->
@@ -83,8 +84,6 @@ let find_index arr x instance =
 
 let show_grid (grid : letter array array) found_words word_positions
     (grid_box : GPack.box) highlight_mode =
-  print_endline "show_grid called" [@coverage off];
-
   (* Convert the set of found words into a list *)
   let found_list = BatSet.to_list found_words in
 
@@ -169,7 +168,6 @@ let word_to_highlight state theme_target_words =
 
 let hint_highlighter hint_word word_positions grid found_words grid_box
     highlight_mode =
-  print_endline "hint_highlighter called" [@coverage off];
   match List.assoc_opt hint_word word_positions [@coverage off] with
   | Some positions ->
       let temp_hint_found_words = BatSet.add hint_word found_words in
@@ -196,7 +194,6 @@ let hint_revealer state word_positions target_words accepted_words grid_box
           "Sorry, hint not unlocked yet. Words left to unlock hint: %d\n"
           (3 - valid_guesses_count)
       else
-        (* Printf.printf "Hint word: %s\n" hint_word; *)
         hint_highlighter hint_word word_positions state.grid state.found_words
           grid_box highlight_mode
 

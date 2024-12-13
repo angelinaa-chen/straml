@@ -659,6 +659,13 @@ let () =
   (* Create a fixed container inside the horizontal box *)
   let fixed_container = GPack.fixed ~packing:hbox#add () in
 
+  (* Create and pack quit button *)
+  let quit_button = GButton.button ~label:"Quit" () in
+  (* Set up a callback for the button click event *)
+  ignore
+    (quit_button#connect#clicked ~callback:(fun () -> start_window#destroy ()));
+  fixed_container#put ~x:40 ~y:0 quit_button#coerce;
+
   (* Create and pack start button *)
   let start_button = GButton.button ~label:"Play" () in
   (* Set up a callback for the button click event *)
@@ -666,7 +673,7 @@ let () =
     (start_button#connect#clicked ~callback:(fun () ->
          make_choose_window ();
          start_window#destroy ()));
-  fixed_container#put ~x:40 ~y:0 start_button#coerce;
+  fixed_container#put ~x:120 ~y:0 start_button#coerce;
 
   (* Create and pack instruction button *)
   let instruction_button = GButton.button ~label:"Instructions" () in
@@ -674,7 +681,7 @@ let () =
   ignore
     (instruction_button#connect#clicked ~callback:(fun () ->
          make_instruction_window instruction_button));
-  fixed_container#put ~x:120 ~y:0 instruction_button#coerce;
+  fixed_container#put ~x:200 ~y:0 instruction_button#coerce;
 
   let terminal_button =
     GButton.button ~label:"Play in Terminal" ~packing:hbox#add ()
