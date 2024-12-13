@@ -508,8 +508,9 @@ let rec make_choose_window () =
                  word_positions grid_box 1;
 
                if !guess_counter > 0 && (!guess_counter - !hints_used) mod 3 = 0
-               then message_label#set_text "Hint Unlocked!";
-               hint_button#set_sensitive true;
+               then (
+                 message_label#set_text "Hint Unlocked!";
+                 hint_button#set_sensitive true);
 
                (* Update game_info label*)
                game_info_label#set_text
