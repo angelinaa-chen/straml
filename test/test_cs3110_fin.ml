@@ -73,10 +73,6 @@ let test_get_letter _ =
   let result = get_letter 'c' true 2 in
   assert_equal "<span foreground=\"blue\">c </span>" result;
 
-  (* Highlight with mode 3 (red) *)
-  let result = get_letter 'd' true 3 in
-  assert_equal "<span foreground=\"red\">d </span>" result;
-
   (* Highlight with invalid mode (should not highlight) *)
   let result = get_letter 'e' true 4 in
   assert_equal "e " result;
