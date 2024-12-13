@@ -47,26 +47,485 @@ let test_handle_guess _ =
   assert_equal true
     (BatSet.equal no_update_state.found_words expected_found_words)
 
-(* let test_process_input _ = let grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |] in
-   let theme = "Fall Fun" in let target_words = [ "target" ] in let
-   accepted_words = BatSet.of_list [ "hint"; "clue" ] in let match_counter = ref
-   0 in let hint_counter = ref 0 in let max_hints = 3 in let initial_state =
-   initialize_game grid theme in
+let test_is_word_in_grid _ =
+  let grid =
+    [| [| 'A'; 'B'; 'C' |]; [| 'D'; 'E'; 'F' |]; [| 'G'; 'H'; 'I' |] |]
+  in
+  assert_bool "Word should be found" (is_word_in_grid grid "ABC");
+  assert_bool "Word should not be found" (not (is_word_in_grid grid "XYZ"))
 
-   let match_state = process_input initial_state "target" target_words
-   match_counter hint_counter max_hints accepted_words in let
-   expected_found_words = BatSet.add "target" initial_state.found_words in
-   assert_equal !match_counter 1; assert_equal match_state.found_words
-   expected_found_words;
+let test_alr_guessed _ =
+  (* Initial guessed words set *)
+  let guessed_words = BatSet.of_list [ "apple"; "banana"; "cherry" ] in
 
-   let hint_state = process_input match_state "hint" target_words match_counter
-   hint_counter max_hints accepted_words in assert_equal !hint_counter 1;
-   assert_equal hint_state.found_words expected_found_words;
+  (* Test case 1: Guess is new, should be added *)
+  let new_guess = "date" in
+  let result = alr_guessed new_guess guessed_words in
+  assert_equal (BatSet.of_list [ "apple"; "banana"; "cherry"; "date" ]) result;
 
-   let invalid_state = process_input hint_state "invalid" target_words
-   match_counter hint_counter max_hints accepted_words in assert_equal
-   !match_counter 1; assert_equal !hint_counter 1; assert_equal
-   invalid_state.found_words expected_found_words *)
+  (* Test case 2: Guess is already in the set, should remain unchanged *)
+  let existing_guess = "banana" in
+  let result = alr_guessed existing_guess guessed_words in
+  assert_equal (BatSet.of_list [ "apple"; "banana"; "cherry" ]) result
+
+let test_get_letter _ =
+  (* Test case 3: Highlight with mode 2 (blue) *)
+  let result = get_letter 'c' true 2 in
+  assert_equal "<span foreground=\"blue\">c </span>" result;
+
+  (* Test case 4: Highlight with mode 3 (red) *)
+  let result = get_letter 'd' true 3 in
+  assert_equal "<span foreground=\"red\">d </span>" result;
+
+  (* Test case 5: Highlight with invalid mode (should not highlight) *)
+  let result = get_letter 'e' true 4 in
+  assert_equal "e " result;
+
+  (* Test case 6: No highlight (highlight = false) *)
+  let result = get_letter 'f' false 0 in
+  assert_equal "f " result
+
+(* Helper function to capture the output of a printed statement *)
+let capture_output f =
+  let output = open_out "/tmp/test_output.txt" in
+  let saved_stdout = Unix.dup Unix.stdout in
+  Unix.dup2 (Unix.descr_of_out_channel output) Unix.stdout;
+  f ();
+  flush stdout;
+  Unix.dup2 saved_stdout Unix.stdout;
+  close_out output;
+  let lines = ref [] in
+  let ic = open_in "/tmp/test_output.txt" in
+  try
+    while true do
+      lines := input_line ic :: !lines
+    done;
+    []
+  with End_of_file ->
+    close_in ic;
+    List.rev !lines
+(* Test case for print_letter_yellow *)
+
+let test_print_letter_yellow _ =
+  (* When highlight = true, it should print in yellow (escape sequence) *)
+  let result = capture_output (fun () -> print_letter_yellow 'a' true) in
+  assert_equal [ "\027[1;33ma\027[0m " ] result;
+
+  (* When highlight = false, it should print normally without escape
+     sequences *)
+  let result = capture_output (fun () -> print_letter_yellow 'a' false) in
+  assert_equal [ "a " ] result
+
+(* Test case for print_letter_green *)
+let test_print_letter_green _ =
+  (* When highlight = true, it should print in green (escape sequence) *)
+  let result = capture_output (fun () -> print_letter_green 'b' true) in
+  assert_equal [ "\027[1;32mb\027[0m " ] result;
+
+  (* When highlight = false, it should print normally without escape
+     sequences *)
+  let result = capture_output (fun () -> print_letter_green 'b' false) in
+  assert_equal [ "b " ] result
+
+(* Test case for print_letter_blue *)
+let test_print_letter_blue _ =
+  (* When highlight = true, it should print in blue (escape sequence) *)
+  let result = capture_output (fun () -> print_letter_blue 'c' true) in
+  assert_equal [ "\027[1;34mc\027[0m " ] result;
+
+  (* When highlight = false, it should print normally without escape
+     sequences *)
+  let result = capture_output (fun () -> print_letter_blue 'c' false) in
+  assert_equal [ "c " ] result
+
+let test_find_index _ =
+  (* Test 2: Element is found but the desired instance is not present *)
+  let arr = [| 1; 2; 3; 2; 4 |] in
+  let result = find_index arr 2 3 in
+  assert_equal None result;
+
+  (* Test 3: Element is not present in the array *)
+  let arr = [| 1; 2; 3; 4 |] in
+  let result = find_index arr 5 1 in
+  assert_equal None result;
+
+  (* Test 5: Empty array, element is not found *)
+  let arr = [||] in
+  let result = find_index arr 1 1 in
+  assert_equal None result;
+
+  (* Test 7: Element occurs only once, and asking for the second instance should
+     return None *)
+  let arr = [| 10 |] in
+  let result = find_index arr 10 2 in
+  assert_equal None result
+
+let test_load_words _ =
+  (* Test 1: Load words from a valid file *)
+  let content = "apple\nbanana\norange\n" in
+  let filename = Filename.temp_file "test" ".txt" in
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc;
+
+  let result = load_words filename in
+  let expected = BatSet.of_list [ "apple"; "banana"; "orange" ] in
+
+  assert_equal result expected;
+
+  (* Test 2: Load words with duplicates from file (duplicates should be
+     ignored) *)
+  let content = "apple\nbanana\napple\norange\nbanana\n" in
+  let filename = Filename.temp_file "test" ".txt" in
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc;
+
+  let result = load_words filename in
+  let expected = BatSet.of_list [ "apple"; "banana"; "orange" ] in
+  assert_equal result expected;
+
+  (* Test 3: Load an empty file (should return an empty set) *)
+  let content = "" in
+  let filename = Filename.temp_file "test" ".txt" in
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc;
+
+  let result = load_words filename in
+  let expected = BatSet.empty in
+  assert_equal result expected;
+
+  (* Test 4: Load a file with mixed case words (should convert to lowercase) *)
+  let content = "Apple\nBanana\nOrange\n" in
+  let filename = Filename.temp_file "test" ".txt" in
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc;
+
+  let result = load_words filename in
+  let expected = BatSet.of_list [ "apple"; "banana"; "orange" ] in
+  assert_equal result expected
+
+let test_word_to_highlight _ =
+  (* Test case 1: No words found yet, should return the first word from target
+     words *)
+  let state =
+    {
+      grid = [| [| 'a'; 'b'; 'c' |]; [| 'd'; 'e'; 'f' |]; [| 'g'; 'h'; 'i' |] |];
+      found_words = BatSet.empty;
+      guessed_words = BatSet.empty;
+      theme = "Animals";
+    }
+  in
+  let target_words = [ "cat"; "dog"; "fish" ] in
+  let result = word_to_highlight state target_words in
+  match result with
+  | Some word -> Printf.printf "Test 1 passed: %s\n" word
+  | None -> (
+      Printf.printf "Test 1 failed\n";
+
+      (* Test case 2: One word found, should return the next unguessed word *)
+      let state =
+        {
+          grid =
+            [| [| 'a'; 'b'; 'c' |]; [| 'd'; 'e'; 'f' |]; [| 'g'; 'h'; 'i' |] |];
+          found_words = BatSet.add "cat" BatSet.empty;
+          guessed_words = BatSet.empty;
+          theme = "Animals";
+        }
+      in
+      let result = word_to_highlight state target_words in
+      match result with
+      | Some word when word = "dog" -> Printf.printf "Test 2 passed: %s\n" word
+      | _ -> (
+          Printf.printf "Test 2 failed\n";
+
+          (* Test case 3: All words found, should return None *)
+          let state =
+            {
+              grid =
+                [|
+                  [| 'a'; 'b'; 'c' |]; [| 'd'; 'e'; 'f' |]; [| 'g'; 'h'; 'i' |];
+                |];
+              found_words = BatSet.of_list [ "cat"; "dog"; "fish" ];
+              guessed_words = BatSet.empty;
+              theme = "Animals";
+            }
+          in
+          let result = word_to_highlight state target_words in
+          match result with
+          | None -> Printf.printf "Test 3 passed\n"
+          | Some _ -> (
+              Printf.printf "Test 3 failed\n";
+
+              (* Test case 4: Target words empty, should return None *)
+              let state =
+                {
+                  grid =
+                    [|
+                      [| 'a'; 'b'; 'c' |];
+                      [| 'd'; 'e'; 'f' |];
+                      [| 'g'; 'h'; 'i' |];
+                    |];
+                  found_words = BatSet.empty;
+                  guessed_words = BatSet.empty;
+                  theme = "Animals";
+                }
+              in
+              let result = word_to_highlight state [] in
+              match result with
+              | None -> Printf.printf "Test 4 passed\n"
+              | Some _ -> Printf.printf "Test 4 failed\n")))
+
+(* Utility function to capture the output of a function that uses
+   print_endline *)
+let capture_stdout f =
+  let old_stdout = Unix.dup Unix.stdout in
+  let pipe_r, pipe_w = Unix.pipe () in
+  Unix.dup2 pipe_w Unix.stdout;
+  f ();
+  Unix.dup2 old_stdout Unix.stdout;
+  let result = really_input_string (Unix.in_channel_of_descr pipe_r) in
+  Unix.close pipe_r;
+  Unix.close pipe_w;
+  result
+
+let test_hint_revealer _ =
+  (* Initialize GTK *)
+  let _ = GMain.init () in
+
+  (* Create a real grid_box *)
+  let window = GWindow.window ~title:"Test" ~width:200 ~height:200 () in
+  let grid_box = GPack.vbox ~packing:window#add () in
+
+  let grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |] in
+  let highlight_mode = 1 in
+
+  (* use an int for highlight_mode *)
+
+  (* Mock game state *)
+  let state =
+    {
+      grid;
+      found_words = BatSet.empty;
+      (* no words found yet *)
+      guessed_words = BatSet.of_list [ "apple"; "banana" ];
+      (* guessed words *)
+      theme = "fruits";
+    }
+  in
+
+  (* Mock word positions and accepted words *)
+  let word_positions =
+    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+  in
+  let target_words = [ "apple"; "banana" ] in
+  let accepted_words = BatSet.of_list [ "apple"; "banana"; "cherry" ] in
+
+  (* convert list to BatSet *)
+
+  (* Simple test: less than 3 valid guesses, hint not unlocked *)
+  let _ =
+    hint_revealer state word_positions target_words accepted_words grid_box
+      highlight_mode
+  in
+
+  (* We expect the message: "Sorry, hint not unlocked yet. Words left to unlock
+     hint: 1" *)
+
+  (* Run GTK main loop *)
+  ()
+
+let test_process_input_word_already_guessed _ =
+  let initial_state =
+    {
+      grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
+      (* Sample grid *)
+      found_words = BatSet.empty;
+      guessed_words = BatSet.of_list [ "apple" ];
+      (* Already guessed "apple" *)
+      theme = "fruits";
+    }
+  in
+  let match_counter = ref 0 in
+  let hint_counter = ref 0 in
+  let max_hints = 3 in
+  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let word_positions =
+    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+  in
+
+  let result =
+    process_input initial_state "apple" [ "apple"; "banana" ] match_counter
+      hint_counter max_hints accepted_words word_positions
+  in
+  assert_equal initial_state result
+
+let test_process_input_word_found_in_target _ =
+  let initial_state =
+    {
+      grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
+      found_words = BatSet.empty;
+      guessed_words = BatSet.empty;
+      (* No words guessed yet *)
+      theme = "fruits";
+    }
+  in
+  let match_counter = ref 0 in
+  let hint_counter = ref 0 in
+  let max_hints = 3 in
+  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let word_positions =
+    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+  in
+
+  let result =
+    process_input initial_state "apple" [ "apple"; "banana" ] match_counter
+      hint_counter max_hints accepted_words word_positions
+  in
+  (* We expect the word to be added to found_words, and the match_counter to
+     increment *)
+  let expected_state =
+    {
+      grid = initial_state.grid;
+      found_words = BatSet.add "apple" initial_state.found_words;
+      guessed_words = BatSet.add "apple" initial_state.guessed_words;
+      theme = initial_state.theme;
+    }
+  in
+  assert_equal expected_state result
+
+(* We expect the message: "Match found! Total matches: 1" *)
+let test_process_input_valid_word_not_in_target _ =
+  let initial_state =
+    {
+      grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
+      found_words = BatSet.empty;
+      guessed_words = BatSet.empty;
+      theme = "fruits";
+    }
+  in
+  let match_counter = ref 0 in
+  let hint_counter = ref 0 in
+  let max_hints = 3 in
+  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let word_positions =
+    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+  in
+
+  let result =
+    process_input initial_state "grape" [ "apple"; "banana" ] match_counter
+      hint_counter max_hints accepted_words word_positions
+  in
+  (* We expect the word "grape" to be counted towards hint_counter *)
+  let expected_state =
+    {
+      grid = initial_state.grid;
+      found_words = initial_state.found_words;
+      guessed_words = BatSet.add "grape" initial_state.guessed_words;
+      theme = initial_state.theme;
+    }
+  in
+  assert_equal expected_state result
+(* We expect the message: "Word count towards hint incremented. Total words
+   guessed: 1" *)
+
+let test_process_input_invalid_word _ =
+  let initial_state =
+    {
+      grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
+      found_words = BatSet.empty;
+      guessed_words = BatSet.empty;
+      theme = "fruits";
+    }
+  in
+  let match_counter = ref 0 in
+  let hint_counter = ref 0 in
+  let max_hints = 3 in
+  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let word_positions =
+    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+  in
+
+  let result =
+    process_input initial_state "pear" [ "apple"; "banana" ] match_counter
+      hint_counter max_hints accepted_words word_positions
+  in
+  (* We expect the word "pear" to be rejected as invalid *)
+  let expected_state =
+    {
+      grid = initial_state.grid;
+      found_words = initial_state.found_words;
+      guessed_words = BatSet.add "pear" initial_state.guessed_words;
+      theme = initial_state.theme;
+    }
+  in
+  assert_equal expected_state result
+
+let test_process_input_no_match _ =
+  let initial_state =
+    {
+      grid = [| [| 'a'; 'b' |]; [| 'c'; 'd' |] |];
+      found_words = BatSet.empty;
+      guessed_words = BatSet.empty;
+      theme = "fruits";
+    }
+  in
+  let match_counter = ref 0 in
+  let hint_counter = ref 0 in
+  let max_hints = 3 in
+  let accepted_words = BatSet.of_list [ "apple"; "banana" ] in
+  let word_positions =
+    [ ("apple", [ (0, 0); (0, 1) ]); ("banana", [ (1, 0); (1, 1) ]) ]
+  in
+
+  let result =
+    process_input initial_state "orange" [ "apple"; "banana" ] match_counter
+      hint_counter max_hints accepted_words word_positions
+  in
+  (* We expect the word "orange" to be added to guessed_words without any
+     changes to found_words or hint_counter *)
+  let expected_state =
+    {
+      grid = initial_state.grid;
+      found_words = initial_state.found_words;
+      guessed_words = BatSet.add "orange" initial_state.guessed_words;
+      theme = initial_state.theme;
+    }
+  in
+  assert_equal expected_state result
+
+(* We expect the message: "Invalid word: orange" *)
+let test_is_spangram _ =
+  (* Test Case 1: The word matches the spangram *)
+  let result = is_spangram "apple" "apple" in
+  assert_equal true result;
+
+  (* Expected: true *)
+
+  (* Test Case 2: The word does not match the spangram *)
+  let result = is_spangram "apple" "banana" in
+  assert_equal false result;
+
+  (* Expected: false *)
+
+  (* Test Case 3: The word is different, but spangram is empty *)
+  let result = is_spangram "apple" "" in
+  assert_equal false result;
+
+  (* Expected: false *)
+
+  (* Test Case 4: The word is the same, but spangram is empty *)
+  let result = is_spangram "" "" in
+  assert_equal true result;
+
+  (* Expected: true *)
+
+  (* Test Case 5: Case-sensitive comparison (word is "Apple", spangram is
+     "apple") *)
+  let result = is_spangram "Apple" "apple" in
+  assert_equal false result (* Expected: false *)
 
 let suite =
   "TestGame"
@@ -75,7 +534,27 @@ let suite =
          "test_print_letter" >:: test_print_letter;
          "test_is_highlighted" >:: test_is_highlighted;
          "test_handle_guess" >:: test_handle_guess;
-         (* "test_process_input" >:: test_process_input; *)
+         "test_is_word_in_grid" >:: test_is_word_in_grid;
+         "test_alr_guessed" >:: test_alr_guessed;
+         "test_get_letter" >:: test_get_letter;
+         "test_print_letter_yellow" >:: test_print_letter_yellow;
+         "test_print_letter_green" >:: test_print_letter_green;
+         "test_print_letter_blue" >:: test_print_letter_blue;
+         "test_find_index" >:: test_find_index;
+         "test_word_to_highlight" >:: test_word_to_highlight;
+         "test_load_words" >:: test_load_words;
+         "test_load_words" >:: test_load_words;
+         "test_word_to_highlight" >:: test_word_to_highlight;
+         "test_hint_revealer" >:: test_hint_revealer;
+         "test_process_input_word_already_guessed"
+         >:: test_process_input_word_already_guessed;
+         "test_process_input_word_found_in_target"
+         >:: test_process_input_word_found_in_target;
+         "test_process_input_valid_word_not_in_target"
+         >:: test_process_input_valid_word_not_in_target;
+         "test_process_input_invalid_word" >:: test_process_input_invalid_word;
+         "test_process_input_no_match" >:: test_process_input_no_match;
+         "test_is_spangram" >:: test_is_spangram;
        ]
 
 let () = run_test_tt_main suite

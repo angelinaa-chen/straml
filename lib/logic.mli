@@ -64,3 +64,14 @@ val process_input :
   game_state
 (** handles one turn of the game given the current [state] and a guess [word].
     performs appropriate processing and returns an updated game_state*)
+
+type letter = char
+
+val handle_guess : game_state -> string -> string list -> game_state
+val is_word_in_grid : letter array array -> string -> bool
+val get_letter : letter -> bool -> int -> string
+val print_letter_yellow : letter -> bool -> unit
+val print_letter_blue : letter -> bool -> unit
+val print_letter_green : letter -> bool -> unit
+val find_index : 'a array -> 'a -> int -> int option
+val is_spangram : 'a -> 'a -> bool
