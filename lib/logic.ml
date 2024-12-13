@@ -224,10 +224,11 @@ let hint_revealer state word_positions target_words accepted_words grid_box
         Printf.printf
           "Sorry, hint not unlocked yet. Words left to unlock hint: %d\n"
           (3 - valid_guesses_count)
-      else Printf.printf "Displaying hint for word: %s\n" hint_word;
-      (* Printf.printf "Hint word: %s\n" hint_word; *)
-      hint_highlighter hint_word word_positions state.grid state.found_words
-        grid_box highlight_mode
+      else (
+        Printf.printf "Displaying hint for word: %s\n" hint_word;
+        (* Printf.printf "Hint word: %s\n" hint_word; *)
+        hint_highlighter hint_word word_positions state.grid state.found_words
+          grid_box highlight_mode)
 
 let process_input state word target_words match_counter hint_counter max_hints
     accepted_words word_positions =
