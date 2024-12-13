@@ -186,39 +186,56 @@ let make_instruction_window instruction_button =
   (* Connect destroy signal *)
   ignore (instruction_window#connect#destroy ~callback:destroy_window);
 
-  (* Vertical box *)
-  let vbox = GPack.vbox ~border_width:20 ~packing:instruction_window#add () in
+  (* Centered vertical box *)
+  let vbox = GPack.vbox ~spacing:10 ~packing:instruction_window#add () in
+  vbox#set_halign `CENTER;
+  vbox#set_valign `CENTER;
 
   (* Title label *)
   let title_label = GMisc.label ~text:"How to Play" ~packing:vbox#pack () in
   ignore
     (title_label#misc#connect#realize ~callback:(fun () ->
          title_label#misc#modify_font
-           (GPango.font_description_from_string "Serif 15")));
+           (GPango.font_description_from_string "Serif 30")));
 
-  (* Summary label *)
+  ignore (GMisc.label ~text:"" ~height:20 ~packing:vbox#pack ());
+
+  (* Instructions label *)
   let instructions_text =
-    "Welcome to **Straml**, the word association game! Your goal is to group a \
-     list of given words into sets based on their common themes or \
-     connections.\n\n\
-     Unlike the touchscreen version, you’ll use a text input box to create \
-     your groups. When you’re ready to submit a group, type the words into the \
-     input box separated by commas (e.g., `apple, orange, banana` for fruits) \
-     and press the **Submit** button.\n\n\
-     If your group is correct, it will be accepted, and the grouped words will \
-     be removed from the list. If the group is incorrect, you’ll be prompted \
-     to try again.\n\n\
-     Keep organizing the words until all are correctly grouped. Remember, the \
+    "Welcome to Straml: The OCaml-based adaptation of the New York Times game \
+     Strands! Similar to Wordle, Strands consists of grid of letters, a theme \
+     and solution words.\n\
+    \ The objective of the game is to find all of the hidden answers within \
+     the grid to win the game!\n\n\
+     To solve words, letters can be joined together horizontally, vertically \
+     or diagonally by one space to its immediate side.\n\
+    \ You can combine as many unselected letters together as needed, but only \
+     dictionary words of more than 3 letters will be accepted as answers.\n\n\
+     Once an accepted non-theme word has been found, the match counter will \
+     increase and the hint count will increase by a third. Each time 3 \
+     non-theme words are found, the player will earn a hint.\n\
+    \ Players can enter as many non-theme words as needed but they must use \
+     the hint button before they can begin earning additional hints. \n\
+    \ Using a hint highlights the letters of the theme word, but players must \
+     still figure out what the word spells.\n\n\
+     Keep organizing the words until all are correctly grouped. The \
      connections can sometimes be subtle, so think creatively and explore \
      different possibilities.\n\n\
-     Good luck and have fun!\n"
+     Good luck and have fun!!\n\n\
+    \ Source: https://wordsrated.com/strands-nyt-game-rules-and-how-to-play/\n"
   in
-  ignore (GMisc.label ~text:instructions_text ~packing:vbox#pack ());
+  ignore
+    (let instructions_label =
+       GMisc.label ~text:instructions_text ~packing:vbox#pack ()
+     in
+     instructions_label#misc#modify_font
+       (GPango.font_description_from_string "Serif 17"));
 
-  (* Buttons *)
-  let hbox = GPack.hbox ~spacing:20 ~packing:vbox#pack () in
-
-  let quit_button = GButton.button ~label:"Ok" ~packing:hbox#pack () in
+  (* Button *)
+  let button_hbox = GPack.hbox ~spacing:10 ~packing:vbox#pack () in
+  button_hbox#set_halign `CENTER;
+  button_hbox#set_valign `CENTER;
+  let quit_button = GButton.button ~label:"OK" ~packing:button_hbox#pack () in
   ignore
     (quit_button#connect#clicked ~callback:(fun () ->
          instruction_button#set_sensitive true;
@@ -232,9 +249,6 @@ let make_instruction_window instruction_button =
    again*)
 
 let rec make_choose_window () =
-  (*BEGIN INTERNAL FUNCTION
-    DEFINITIONS-----------------------------------------------------*)
-
   (*[stats_summary] displays a window with the user's end game stats after
     finding all the words*)
   let stats_summary state match_counter guess_counter start_time =
@@ -309,14 +323,12 @@ let rec make_choose_window () =
       (help_button#connect#clicked ~callback:(fun () ->
            make_instruction_window help_button));
 
-    (* Add more vertical space between the title and the grid *)
-    (* let vertical_space_after_title = 150 in let _spacer1 = GPack.vbox
-       ~spacing:vertical_space_after_title ~packing:vbox#pack () in *)
     let title_label =
       GMisc.label ~use_underline:true ~text:theme ~packing:vbox#pack ()
     in
     title_label#misc#modify_font
       (GPango.font_description_from_string "Serif Bold 40");
+    ignore (GMisc.label ~text:"" ~height:10 ~packing:vbox#pack ());
 
     (* Create a box for the game grid *)
     let grid_box = GPack.vbox ~packing:vbox#pack () in
@@ -362,8 +374,6 @@ let rec make_choose_window () =
         ~packing:info_box#pack ()
     in
 
-    (* let message_label = GMisc.label ~text:"" ~packing:info_box#pack () in *)
-
     (* Text entry for answers *)
     let text_entry = GEdit.entry ~packing:vbox#pack () in
 
@@ -371,7 +381,6 @@ let rec make_choose_window () =
     let hbox = GPack.hbox ~spacing:30 ~packing:vbox#pack () in
     hbox#set_halign `CENTER;
 
-    (* Center the buttons horizontally *)
     let submit_button = GButton.button ~label:"Submit" ~packing:hbox#pack () in
 
     let hint_button = GButton.button ~label:"Hint" ~packing:hbox#pack () in
@@ -544,7 +553,7 @@ let () =
   window_count := !window_count + 1;
 
   (* Create vertical element box with 20 px of padding *)
-  let vbox = GPack.vbox ~spacing:25 ~packing:start_window#add () in
+  let vbox = GPack.vbox ~spacing:10 ~packing:start_window#add () in
   vbox#set_halign `CENTER;
   vbox#set_valign `CENTER;
 
@@ -552,14 +561,26 @@ let () =
   title_label#misc#modify_font
     (GPango.font_description_from_string "Serif Bold 30");
 
+  let description_label =
+    GMisc.label ~text:"An OCaml-based adaptation of Strands" ~packing:vbox#pack
+      ()
+  in
+  description_label#misc#modify_font
+    (GPango.font_description_from_string "Serif 20");
   let phrase_label =
     GMisc.label ~text:"Find hidden words and uncover the theme!"
       ~packing:vbox#pack ()
   in
-  phrase_label#misc#modify_font (GPango.font_description_from_string "Serif 20");
-  ignore
-    (GMisc.label ~text:"By: Falak, Amy, Angie, and Matthew" ~packing:vbox#pack
-       ());
+  phrase_label#misc#modify_font (GPango.font_description_from_string "Serif 15");
+  ignore (GMisc.label ~text:"" ~packing:vbox#pack ());
+
+  let name_label =
+    GMisc.label
+      ~text:"By: Falak Raheja, Amy Wang, Angelina Chen, and Matthew Jia"
+      ~packing:vbox#pack ()
+  in
+  name_label#misc#modify_font (GPango.font_description_from_string "Serif 15");
+  ignore (GMisc.label ~text:"" ~packing:vbox#pack ());
 
   let hbox = GPack.hbox ~spacing:20 ~packing:vbox#pack () in
   hbox#set_halign `CENTER;
