@@ -598,17 +598,13 @@ let test_is_spangram _ =
   let result = is_spangram "Matthew" "matthew" in
   assert_equal false result (* Expected: false *)
 
-let create_message_label () =
-  let label = GMisc.label ~text:"" () in
-  (label :> < set_text : string -> unit ; .. >)
+let create_message_label () = None
 
 (* Test function for process_input *)
 let test_process_input _ =
   let _ = GMain.init () in
 
   (* Initialize message_label *)
-  let message_label = Some (create_message_label ()) in
-
   (* Initialize game state *)
   let state =
     {
@@ -628,7 +624,7 @@ let test_process_input _ =
   (* Test case 1: Valid word from target_words *)
   let state =
     process_input state "cat" target_words match_counter guess_counter max_hints
-      accepted_words word_positions message_label
+      accepted_words word_positions None
   in
   assert_equal (BatSet.mem "cat" state.found_words) true;
   assert_equal (BatSet.mem "cat" state.guessed_words) true;
@@ -636,7 +632,7 @@ let test_process_input _ =
   (* Test case 2: Valid word in grid but not target_words *)
   let state =
     process_input state "bat" target_words match_counter guess_counter max_hints
-      accepted_words word_positions message_label
+      accepted_words word_positions None
   in
   assert_equal (BatSet.mem "bat" state.found_words) false;
   assert_equal (BatSet.mem "bat" state.guessed_words) true;
@@ -644,7 +640,7 @@ let test_process_input _ =
   (* Test case 3: Invalid word (not in grid or accepted_words) *)
   let state =
     process_input state "xyz" target_words match_counter guess_counter max_hints
-      accepted_words word_positions message_label
+      accepted_words word_positions None
   in
   assert_equal (BatSet.mem "xyz" state.found_words) false;
   assert_equal (BatSet.mem "xyz" state.guessed_words) true;
@@ -652,7 +648,7 @@ let test_process_input _ =
   (* Test case 4: Word already guessed *)
   let state =
     process_input state "cat" target_words match_counter guess_counter max_hints
-      accepted_words word_positions message_label
+      accepted_words word_positions None
   in
   assert_equal (BatSet.cardinal state.guessed_words) 3
 
