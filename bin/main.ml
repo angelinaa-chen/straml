@@ -5,6 +5,10 @@ open Printf
 open Cs3110_fin.Logic
 open Unix
 open Gdk
+open Cs3110_fin.Filter_csv
+
+(*load accepted words*)
+let () = Cs3110_fin.Filter_csv.process_csv
 
 (**Loads a puzzle grid from the given [filename] csv*)
 let load_grid filename : char array array =
