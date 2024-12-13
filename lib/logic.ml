@@ -88,60 +88,58 @@ let show_grid (grid : letter array array) found_words word_positions
   let found_list = BatSet.to_list found_words in
 
   (* Create the grid string by iterating over each row and column *)
-  let (grid_string [@coverage off]) =
-    (Array.fold_left
-       (fun (acc : string) (row : letter array) ->
-         (* Find the index of the row *)
-         let r =
-           match find_index grid row 0 with
-           | None -> failwith "Row not found in grid"
-           | Some index -> index [@coverage off]
-         in
-         (* Initialize the array to keep track of letter instances in the row *)
-         let instance_counts = Array.make 26 0 in
-         (* Construct the row's string with highlighted letters *)
-         let new_row =
-           (Array.fold_left
-              (fun (acc2 : string) (l : letter) ->
-                (* Map 'A' - 'Z' to ASCII values 65 - 90 *)
-                let char_code = Char.code l - 65 in
-                (* Track occurrences of the same letter in the row *)
-                let instance = instance_counts.(char_code) in
-                instance_counts.(char_code) <- instance + 1;
-                (* Find the index of the letter within the row *)
-                let c =
-                  match find_index row l instance with
-                  | None -> failwith "Letter not found in row"
-                  | Some index -> index [@coverage off]
-                in
-                (*Highlight character yellow if it belongs to a spangram*)
-                if List.mem (r, c) (snd (List.hd word_positions)) then
-                  acc2
-                  ^ get_letter l
-                      (is_highlighted (r, c) found_list word_positions)
-                      3
-                else
-                  (* Append the letter with the appropriate highlight *)
-                  acc2
-                  ^ get_letter l
-                      (is_highlighted (r, c) found_list word_positions)
-                      highlight_mode)
-              "" row [@coverage off])
-         in
-         (* Add the new row to the accumulated grid string *)
-         acc ^ new_row ^ "\n")
-       "" grid [@coverage off])
+  let grid_string =
+    Array.fold_left
+      (fun (acc : string) (row : letter array) ->
+        (* Find the index of the row *)
+        let r =
+          match find_index grid row 0 with
+          | None -> failwith "Row not found in grid"
+          | Some index -> index
+        in
+        (* Initialize the array to keep track of letter instances in the row *)
+        let instance_counts = Array.make 26 0 in
+        (* Construct the row's string with highlighted letters *)
+        let new_row =
+          Array.fold_left
+            (fun (acc2 : string) (l : letter) ->
+              (* Map 'A' - 'Z' to ASCI values 65 - 90 *)
+              let char_code = Char.code l - 65 in
+              (* Track occurrences of the same letter in the row *)
+              let instance = instance_counts.(char_code) in
+              instance_counts.(char_code) <- instance + 1;
+              (* Find the index of the letter within the row *)
+              let c =
+                match find_index row l instance with
+                | None -> failwith "Letter not found in row"
+                | Some index -> index
+              in
+              (*Highlight character yellow if it belongs to a spangram*)
+              if List.mem (r, c) (snd (List.hd word_positions)) then
+                acc2
+                ^ get_letter l
+                    (is_highlighted (r, c) found_list word_positions)
+                    3
+              else
+                (* Append the letter with the appropriate highlight *)
+                acc2
+                ^ get_letter l
+                    (is_highlighted (r, c) found_list word_positions)
+                    highlight_mode)
+            "" row
+        in
+        (* Add the new row to the accumulated grid string *)
+        acc ^ new_row ^ "\n")
+      "" grid
   in
 
   (* Get the list of all children in the grid box container *)
   let children = grid_box#children in
   (* Remove all existing widgets from the grid box *)
-  List.iter
-    (fun widget -> grid_box#remove widget#coerce)
-    children [@coverage off];
+  List.iter (fun widget -> grid_box#remove widget#coerce) children;
 
   (* Create a new label for the grid with the markup string *)
-  let new_grid_label = (GMisc.label ~markup:grid_string () [@coverage off]) in
+  let new_grid_label = GMisc.label ~markup:grid_string () in
 
   (* Set the font for the label to a monospace font for uniform letter width *)
   new_grid_label#misc#modify_font
@@ -170,7 +168,7 @@ let word_to_highlight state theme_target_words =
 
 let hint_highlighter hint_word word_positions grid found_words grid_box
     highlight_mode =
-  match List.assoc_opt hint_word word_positions [@coverage off] with
+  match List.assoc_opt hint_word word_positions with
   | Some positions ->
       let temp_hint_found_words = BatSet.add hint_word found_words in
       (show_grid grid temp_hint_found_words word_positions grid_box
