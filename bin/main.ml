@@ -4,6 +4,7 @@ open Gtk
 open Printf
 open Cs3110_fin.Logic
 open Unix
+open Gdk
 
 (**Loads a puzzle grid from the given [filename] csv*)
 let load_grid filename : char array array =
@@ -172,7 +173,8 @@ let destroy_window () =
 let make_instruction_window instruction_button =
   instruction_button#set_sensitive false;
   let instruction_window =
-    GWindow.window ~title:"Instructions" ~border_width:20 ()
+    GWindow.window ~title:"Instructions" ~border_width:20 ~width:400 ~height:400
+      ()
   in
   window_count := !window_count + 1;
 
@@ -233,7 +235,8 @@ let rec make_choose_window () =
   let stats_summary state match_counter hint_counter start_time =
     (* Create new window *)
     let stats_window =
-      GWindow.window ~title:"End Game Stats" ~border_width:20 ()
+      GWindow.window ~title:"End Game Stats" ~border_width:20 ~width:400
+        ~height:400 ()
     in
     window_count := !window_count + 1;
 
@@ -283,7 +286,9 @@ let rec make_choose_window () =
 
   let make_game_window parent grid target_words word_positions theme =
     (* Create new window *)
-    let game_Window = GWindow.window ~title:theme ~border_width:20 () in
+    let game_Window =
+      GWindow.window ~title:theme ~border_width:20 ~width:400 ~height:400 ()
+    in
     window_count := !window_count + 1;
 
     (* Set up exit function when the window is closed *)
@@ -386,7 +391,8 @@ let rec make_choose_window () =
 
   (* Create new window *)
   let choose_window =
-    GWindow.window ~title:"Choose Theme" ~border_width:20 ()
+    GWindow.window ~title:"Choose Theme" ~border_width:20 ~width:400 ~height:400
+      ()
   in
   window_count := !window_count + 1;
 
@@ -459,29 +465,46 @@ let rec make_choose_window () =
          choose_window#destroy ()));
   choose_window#show ()
 
-(* Execute GUI*)
 let () =
-  let start_window = GWindow.window ~title:"Straml" ~border_width:10 () in
+  let start_window =
+    GWindow.window ~title:"Straml" ~border_width:10 ~width:400 ~height:400 ()
+  in
+  (* Set the window to fullscreen *)
+  start_window#fullscreen ();
+
   (* Set up exit function when the window is closed *)
   ignore (start_window#connect#destroy ~callback:destroy_window);
   window_count := !window_count + 1;
 
   (* Create vertical element box with 20 px of padding *)
-  let vbox = GPack.vbox ~spacing:10 ~packing:start_window#add () in
-  (* Create game title and subtitle with font 20 *)
+  let vbox = GPack.vbox ~spacing:50 ~packing:start_window#add () in
+  vbox#set_halign `CENTER;
+  vbox#set_valign `CENTER;
+
   let title_label = GMisc.label ~text:"Straml" ~packing:vbox#pack () in
-  title_label#misc#modify_font (GPango.font_description_from_string "Serif 20");
+  title_label#misc#modify_font
+    (GPango.font_description_from_string "Serif Bold 30");
+
+  let phrase_label =
+    GMisc.label ~text:"Find hidden words and uncover the day’s theme."
+      ~packing:vbox#pack ()
+  in
+  phrase_label#misc#modify_font (GPango.font_description_from_string "Serif 20");
   ignore
     (GMisc.label ~text:"By: Falak, Amy, Angie, and Matthew" ~packing:vbox#pack
        ());
 
   let hbox = GPack.hbox ~spacing:20 ~packing:vbox#pack () in
+  hbox#set_halign `CENTER;
+  (* center horizontally in vbox *)
+  hbox#set_valign `CENTER;
 
-  (* Create a start button to execute program *)
+  (* center vertically in vbox *)
 
-  (* Create a fixed container *)
+  (* Create a fixed container inside the horizontal box *)
   let fixed_container = GPack.fixed ~packing:hbox#add () in
 
+  (* Create and pack start button *)
   let start_button = GButton.button ~label:"Play" () in
   (* Set up a callback for the button click event *)
   ignore
@@ -490,6 +513,7 @@ let () =
          start_window#destroy ()));
   fixed_container#put ~x:40 ~y:0 start_button#coerce;
 
+  (* Create and pack instruction button *)
   let instruction_button = GButton.button ~label:"Instructions" () in
   (* Set up a callback for the button click event *)
   ignore
