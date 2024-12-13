@@ -482,6 +482,7 @@ let rec make_choose_window () =
     ignore
       (submit_button#connect#clicked ~callback:(fun () ->
            let guess = text_entry#text in
+           text_entry#set_text "";
            match String.lowercase_ascii guess with
            | "q" ->
                stats_summary !state match_counter guess_counter start_time;
