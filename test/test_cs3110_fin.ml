@@ -113,13 +113,10 @@ let test_get_letter _ =
   let result = get_letter 'c' true 2 in
   assert_equal "<span foreground=\"blue\">c </span>" result;
 
-<<<<<<< HEAD
   (* Highlight with mode 3 (yellow) *)
   let result = get_letter 'd' true 3 in
   assert_equal "<span foreground=\"yellow\">d </span>" result;
 
-=======
->>>>>>> b511184a88732c13bf92f4afb047855630e3fe29
   (* Highlight with invalid mode (should not highlight) *)
   let result = get_letter 'e' true 4 in
   assert_equal "e " result;
